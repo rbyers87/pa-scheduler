@@ -9,7 +9,74 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      benefit_balances: {
+        Row: {
+          comp_hours: number | null
+          created_at: string
+          id: string
+          sick_hours: number | null
+          updated_at: string
+          user_id: string
+          vacation_hours: number | null
+        }
+        Insert: {
+          comp_hours?: number | null
+          created_at?: string
+          id?: string
+          sick_hours?: number | null
+          updated_at?: string
+          user_id: string
+          vacation_hours?: number | null
+        }
+        Update: {
+          comp_hours?: number | null
+          created_at?: string
+          id?: string
+          sick_hours?: number | null
+          updated_at?: string
+          user_id?: string
+          vacation_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "benefit_balances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +85,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "supervisor" | "employee"
     }
     CompositeTypes: {
       [_ in never]: never

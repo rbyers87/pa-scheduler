@@ -17,6 +17,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const menuItems = [
   { title: "Schedule", icon: Calendar, path: "/schedule" },
@@ -28,6 +29,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   return (
     <Sidebar>
@@ -45,7 +47,7 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               ))}
               <SidebarMenuItem>
-                <SidebarMenuButton className="text-red-500">
+                <SidebarMenuButton onClick={signOut} className="text-red-500">
                   <LogOut className="w-5 h-5" />
                   <span>Logout</span>
                 </SidebarMenuButton>
