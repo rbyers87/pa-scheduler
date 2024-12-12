@@ -37,9 +37,13 @@ const Schedule = () => {
         .select(`
           *,
           profiles:employee_id (
+            id,
             first_name,
             last_name,
-            email
+            email,
+            role,
+            created_at,
+            updated_at
           )
         `)
         .gte("start_time", startOfDay.toISOString())
@@ -51,7 +55,7 @@ const Schedule = () => {
         throw error;
       }
 
-      return data as Schedule[];
+      return data as unknown as Schedule[];
     },
   });
 
