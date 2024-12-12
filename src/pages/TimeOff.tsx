@@ -31,6 +31,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useAuth } from "@/contexts/AuthContext";
+import { DateRange } from "react-day-picker";
 
 type TimeOffRequest = {
   type: "vacation" | "sick" | "comp";
@@ -40,14 +42,8 @@ type TimeOffRequest = {
 };
 
 const TimeOff = () => {
-  const [selectedDates, setSelectedDates] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
-    from: undefined,
-    to: undefined,
-  });
-
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const form = useForm<TimeOffRequest>();
@@ -73,14 +69,15 @@ const TimeOff = () => {
 
   const createRequest = useMutation({
     mutationFn: async (data: TimeOffRequest) => {
-      const { error } = await supabase.from("time_off_requests").insert([
-        {
-          type: data.type,
-          start_date: data.startDate.toISOString(),
-          end_date: data.endDate.toISOString(),
-          notes: data.notes,
-        },
-      ]);
+      if (!user) throw new Error("User not authenticated");
+      
+      const { error } = await supabase.from("time_off_requests").insert([{
+        employee_id: user.id,
+        type: data.type,
+        start_date: data.startDate.toISOString(),
+        end_date: data.endDate.toISOString(),
+        notes: data.notes,
+      }]);
 
       if (error) throw error;
     },
@@ -91,7 +88,7 @@ const TimeOff = () => {
         description: "Time-off request submitted successfully",
       });
       form.reset();
-      setSelectedDates({ from: undefined, to: undefined });
+      setDateRange(undefined);
     },
     onError: (error) => {
       console.error("Error creating time-off request:", error);
@@ -104,7 +101,7 @@ const TimeOff = () => {
   });
 
   const onSubmit = (data: TimeOffRequest) => {
-    if (!selectedDates.from || !selectedDates.to) {
+    if (!dateRange?.from || !dateRange?.to) {
       toast({
         title: "Error",
         description: "Please select both start and end dates",
@@ -115,8 +112,8 @@ const TimeOff = () => {
 
     createRequest.mutate({
       ...data,
-      startDate: selectedDates.from,
-      endDate: selectedDates.to,
+      startDate: dateRange.from,
+      endDate: dateRange.to,
     });
   };
 
@@ -161,11 +158,8 @@ const TimeOff = () => {
                   <FormLabel>Date Range</FormLabel>
                   <Calendar
                     mode="range"
-                    selected={{
-                      from: selectedDates.from,
-                      to: selectedDates.to,
-                    }}
-                    onSelect={setSelectedDates}
+                    selected={dateRange}
+                    onSelect={setDateRange}
                     numberOfMonths={2}
                     className="rounded-md border"
                   />
