@@ -17,6 +17,7 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    console.log("Login: Attempting login");
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -26,11 +27,13 @@ const Login = () => {
 
       if (error) throw error;
 
+      console.log("Login: Success, navigating to schedule");
       navigate("/schedule");
       toast({
         title: "Logged in successfully",
       });
     } catch (error: any) {
+      console.error("Login: Error during login:", error);
       toast({
         title: "Error logging in",
         description: error.message,
