@@ -26,28 +26,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log("AuthProvider: Initializing");
     
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("AuthProvider: Initial session", session);
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      console.log("AuthProvider: Initial session retrieved", initialSession);
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", _event, session);
-      setSession(session);
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      console.log("Auth state changed:", _event, currentSession);
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+
+      // Handle session changes
+      if (_event === 'SIGNED_IN') {
+        console.log("User signed in, navigating to schedule");
+        navigate("/schedule");
+      } else if (_event === 'SIGNED_OUT') {
+        console.log("User signed out, navigating to login");
+        navigate("/login");
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      console.log("AuthProvider: Cleaning up subscription");
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      navigate("/login");
       toast({
         title: "Signed out successfully",
       });
