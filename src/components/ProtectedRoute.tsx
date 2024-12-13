@@ -1,27 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log("ProtectedRoute: Mounting component");
+    console.log("ProtectedRoute: Checking session state", { session });
     
     if (session === null) {
-      console.log("ProtectedRoute: No session found, redirecting to login");
-      navigate("/login");
-    } else if (session) {
-      console.log("ProtectedRoute: Valid session found", session);
-      setIsLoading(false);
+      console.log("ProtectedRoute: No session, redirecting to login");
+      navigate("/login", { replace: true });
     }
   }, [session, navigate]);
 
-  // Show loading state while checking session
-  if (isLoading && session === undefined) {
-    console.log("ProtectedRoute: Loading state", { isLoading, session });
+  // Show loading state while session is undefined
+  if (session === undefined) {
+    console.log("ProtectedRoute: Session loading");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
@@ -35,6 +31,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return null;
   }
 
-  console.log("ProtectedRoute: Rendering protected content");
+  console.log("ProtectedRoute: Valid session, rendering content");
   return <>{children}</>;
 };

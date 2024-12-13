@@ -23,49 +23,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log("AuthProvider: Initializing");
-    let mounted = true;
+    console.log("AuthProvider: Setting up auth subscriptions");
     
     // Get initial session
-    const initializeAuth = async () => {
-      try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        console.log("AuthProvider: Initial session retrieved", initialSession);
-        if (mounted) {
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
-        }
-      } catch (error) {
-        console.error("Error getting initial session:", error);
-      }
-    };
-
-    initializeAuth();
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      console.log("AuthProvider: Initial session retrieved", initialSession);
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
+    });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       console.log("Auth state changed:", _event, currentSession);
-      if (mounted) {
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
 
-        // Handle session changes
-        if (_event === 'SIGNED_IN') {
-          console.log("User signed in, navigating to schedule");
-          navigate("/schedule");
-        } else if (_event === 'SIGNED_OUT') {
-          console.log("User signed out, navigating to login");
-          setSession(null);
-          navigate("/login");
-        }
+      if (_event === 'SIGNED_IN') {
+        console.log("User signed in, navigating to schedule");
+        navigate("/schedule", { replace: true });
+      } else if (_event === 'SIGNED_OUT') {
+        console.log("User signed out, navigating to login");
+        setSession(null);
+        navigate("/login", { replace: true });
       }
     });
 
     return () => {
-      console.log("AuthProvider: Cleaning up subscription");
-      mounted = false;
+      console.log("AuthProvider: Cleaning up subscriptions");
       subscription.unsubscribe();
     };
   }, [navigate]);
@@ -85,8 +71,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const value = {
+    session,
+    user,
+    signOut,
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, signOut }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
