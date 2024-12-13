@@ -15,7 +15,10 @@ import { format } from "date-fns";
 import { Database } from "@/integrations/supabase/types";
 
 type Schedule = Database["public"]["Tables"]["schedules"]["Row"] & {
-  profiles: Pick<Database["public"]["Tables"]["profiles"]["Row"], "first_name" | "last_name">;
+  profiles: {
+    first_name: string | null;
+    last_name: string | null;
+  };
 };
 
 const Schedule = () => {
