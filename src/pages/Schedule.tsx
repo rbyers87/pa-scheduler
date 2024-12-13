@@ -12,6 +12,11 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { Database } from "@/integrations/supabase/types";
+
+type Schedule = Database["public"]["Tables"]["schedules"]["Row"] & {
+  profiles: Pick<Database["public"]["Tables"]["profiles"]["Row"], "first_name" | "last_name">;
+};
 
 const Schedule = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -43,7 +48,7 @@ const Schedule = () => {
         throw error;
       }
 
-      return data;
+      return data as Schedule[];
     },
   });
 
