@@ -15,10 +15,7 @@ import { format } from "date-fns";
 import { Database } from "@/integrations/supabase/types";
 
 type Schedule = Database["public"]["Tables"]["schedules"]["Row"] & {
-  profiles: {
-    first_name: string | null;
-    last_name: string | null;
-  };
+  profiles: Database["public"]["Tables"]["profiles"]["Row"];
 };
 
 const Schedule = () => {
@@ -37,9 +34,8 @@ const Schedule = () => {
         .from("schedules")
         .select(`
           *,
-          profiles:employee_id (
-            first_name,
-            last_name
+          profiles!inner (
+            *
           )
         `)
         .gte("start_time", startOfDay.toISOString())
