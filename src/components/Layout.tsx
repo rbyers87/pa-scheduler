@@ -4,12 +4,21 @@ import { AppSidebar } from "./AppSidebar";
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-gray-50">
         <AppSidebar />
-        <main className="flex-1 p-6">
-          <SidebarTrigger className="mb-4" />
-          {children}
-        </main>
+        <div className="flex-1 flex flex-col">
+          <header className="bg-white border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger />
+                <h1 className="text-2xl font-semibold text-gray-900">Workforce Scheduler</h1>
+              </div>
+            </div>
+          </header>
+          <main className="flex-1 p-6">
+            {children}
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );
