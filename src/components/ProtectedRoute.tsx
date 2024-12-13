@@ -9,23 +9,18 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     console.log("ProtectedRoute: Mounting component");
-    const checkSession = async () => {
-      console.log("ProtectedRoute: Checking session state:", session);
-      
-      if (session === null) {
-        console.log("ProtectedRoute: No session found, redirecting to login");
-        navigate("/login");
-      } else if (session) {
-        console.log("ProtectedRoute: Valid session found", session);
-        setIsLoading(false);
-      }
-    };
-
-    checkSession();
+    
+    if (session === null) {
+      console.log("ProtectedRoute: No session found, redirecting to login");
+      navigate("/login");
+    } else if (session) {
+      console.log("ProtectedRoute: Valid session found", session);
+      setIsLoading(false);
+    }
   }, [session, navigate]);
 
-  // Show loading state while checking session or loading
-  if (isLoading || session === undefined) {
+  // Show loading state while checking session
+  if (isLoading && session === undefined) {
     console.log("ProtectedRoute: Loading state", { isLoading, session });
     return (
       <div className="flex items-center justify-center min-h-screen">
