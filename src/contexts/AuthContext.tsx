@@ -41,8 +41,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(currentSession?.user ?? null);
 
       if (_event === 'SIGNED_IN') {
-        console.log("User signed in, navigating to schedule");
-        navigate("/schedule", { replace: true });
+        console.log("User signed in, navigating to /");
+        navigate("/", { replace: true });
       } else if (_event === 'SIGNED_OUT') {
         console.log("User signed out, navigating to login");
         setSession(null);

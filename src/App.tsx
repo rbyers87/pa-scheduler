@@ -14,12 +14,12 @@ import Employees from "./pages/Employees";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
+import Index from "./pages/Index";
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
       retry: 1,
     },
   },
@@ -40,7 +40,7 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <Routes>
-                      <Route path="/" element={<Navigate to="/schedule" replace />} />
+                      <Route path="/" element={<Index />} />
                       <Route path="/schedule" element={<Schedule />} />
                       <Route path="/time-off" element={<TimeOff />} />
                       <Route path="/employees" element={<Employees />} />

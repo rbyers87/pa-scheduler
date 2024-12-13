@@ -12,16 +12,9 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { useAuth } from "@/contexts/AuthContext";
-import { Database } from "@/integrations/supabase/types";
-
-type Schedule = Database["public"]["Tables"]["schedules"]["Row"] & {
-  profiles: Database["public"]["Tables"]["profiles"]["Row"];
-};
 
 const Schedule = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const { session } = useAuth();
 
   const { data: schedules, isLoading } = useQuery({
     queryKey: ["schedules", selectedDate],
@@ -37,13 +30,8 @@ const Schedule = () => {
         .select(`
           *,
           profiles:employee_id (
-            id,
             first_name,
-            last_name,
-            email,
-            role,
-            created_at,
-            updated_at
+            last_name
           )
         `)
         .gte("start_time", startOfDay.toISOString())
@@ -55,7 +43,7 @@ const Schedule = () => {
         throw error;
       }
 
-      return data as unknown as Schedule[];
+      return data;
     },
   });
 
