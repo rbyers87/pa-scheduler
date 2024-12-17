@@ -12,7 +12,7 @@ export function Layout() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <SidebarTrigger />
-                <h1 className="text-2xl font-semibold text-gray-900">Workforce Scheduler</h1>
+                <h1 className="text-2xl font-semibold text-gray-900">PAPD Scheduler</h1>
               </div>
             </div>
           </header>
