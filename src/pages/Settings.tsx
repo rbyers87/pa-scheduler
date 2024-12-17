@@ -9,7 +9,7 @@ const Settings = () => {
           <CardTitle>Application Settings</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Settings content will go here</p>
+          <p>Settings functionality will be implemented soon.</p>
         </CardContent>
       </Card>
     </div>

@@ -12,10 +12,16 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Database } from "@/integrations/supabase/types";
 
-type Schedule = Database["public"]["Tables"]["schedules"]["Row"] & {
-  profiles: Database["public"]["Tables"]["profiles"]["Row"];
+type Schedule = {
+  id: string;
+  employee_id: string;
+  start_time: string;
+  end_time: string;
+  profiles: {
+    first_name: string | null;
+    last_name: string | null;
+  };
 };
 
 const Schedule = () => {
@@ -34,19 +40,16 @@ const Schedule = () => {
         .from("schedules")
         .select(`
           *,
-          profiles!inner (
-            *
+          profiles (
+            first_name,
+            last_name
           )
         `)
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
         .order("start_time");
 
-      if (error) {
-        console.error("Error fetching schedules:", error);
-        throw error;
-      }
-
+      if (error) throw error;
       return data as Schedule[];
     },
   });

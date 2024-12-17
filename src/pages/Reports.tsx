@@ -9,7 +9,7 @@ const Reports = () => {
           <CardTitle>Schedule Reports</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Reports will go here</p>
+          <p>Reports functionality will be implemented soon.</p>
         </CardContent>
       </Card>
     </div>
