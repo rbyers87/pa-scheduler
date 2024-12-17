@@ -28,25 +28,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       console.log("AuthProvider: Initial session retrieved", initialSession);
-      setSession(initialSession);
-      setUser(initialSession?.user ?? null);
+      if (initialSession) {
+        setSession(initialSession);
+        setUser(initialSession.user);
+        navigate("/", { replace: true });
+      } else {
+        setSession(null);
+        setUser(null);
+        navigate("/login", { replace: true });
+      }
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+    } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
       console.log("Auth state changed:", _event, currentSession);
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-
-      if (_event === 'SIGNED_IN') {
-        console.log("User signed in, navigating to /");
-        navigate("/", { replace: true });
-      } else if (_event === 'SIGNED_OUT') {
-        console.log("User signed out, navigating to login");
+      
+      if (currentSession) {
+        setSession(currentSession);
+        setUser(currentSession.user);
+        
+        if (_event === 'SIGNED_IN') {
+          console.log("User signed in, navigating to /");
+          navigate("/", { replace: true });
+        }
+      } else {
         setSession(null);
-        navigate("/login", { replace: true });
+        setUser(null);
+        
+        if (_event === 'SIGNED_OUT') {
+          console.log("User signed out, navigating to login");
+          navigate("/login", { replace: true });
+        }
       }
     });
 
