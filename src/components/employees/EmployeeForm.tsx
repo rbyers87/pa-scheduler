@@ -34,13 +34,13 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
 
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
-      console.log("Creating employee:", data);
+      console.log("Creating employee with data:", data);
       
       // Generate a random password for the initial signup
       const password = Math.random().toString(36).slice(-12);
       
       try {
-        // Create the auth user with all data in metadata
+        // Create the auth user with metadata
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: data.email,
           password: password,
