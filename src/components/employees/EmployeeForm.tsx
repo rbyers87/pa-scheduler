@@ -54,7 +54,9 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user created");
       
-      // The handle_new_user trigger will create the initial profile
+      // Wait a moment for the trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Now update the profile with the role
       const { error: updateError } = await supabase
         .from("profiles")
@@ -70,12 +72,14 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       // TODO: In production, you would want to send an email to the user
       // with their temporary password
       console.log("Temporary password for", data.email, ":", password);
+      
+      return { user: authData.user, password };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       toast({
         title: "Success",
-        description: "Employee created successfully",
+        description: `Employee created successfully. Temporary password: ${data.password}`,
       });
       form.reset();
       onSuccess?.();
