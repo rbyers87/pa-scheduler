@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { Plus } from "lucide-react";
+import { v4 as uuidv4 } from 'uuid';
 
 type EmployeeFormData = {
   email: string;
@@ -73,7 +74,16 @@ const Employees = () => {
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
       console.log("Creating employee:", data);
-      const { error } = await supabase.from("profiles").insert([data]);
+      // Generate a UUID for the new employee
+      const employeeData = {
+        ...data,
+        id: uuidv4(), // Add UUID for the id field
+      };
+      
+      const { error } = await supabase
+        .from("profiles")
+        .insert([employeeData]);
+        
       if (error) throw error;
     },
     onSuccess: () => {
