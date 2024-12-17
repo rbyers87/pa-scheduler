@@ -39,52 +39,39 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       // Generate a random password for the initial signup
       const password = Math.random().toString(36).slice(-12);
       
-      // Create the auth user with metadata
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: password,
-        options: {
-          data: {
-            first_name: data.first_name,
-            last_name: data.last_name,
-            role: data.role
+      try {
+        // Create the auth user with all data in metadata
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: data.email,
+          password: password,
+          options: {
+            data: {
+              first_name: data.first_name,
+              last_name: data.last_name,
+              role: data.role,
+              email: data.email
+            }
           }
-        }
-      });
-      
-      if (authError) {
-        console.error("Auth error:", authError);
-        throw authError;
-      }
-      
-      if (!authData.user) {
-        console.error("No user created");
-        throw new Error("No user created");
-      }
-      
-      // Wait for the trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Now update the profile with additional data
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ 
-          role: data.role,
-          first_name: data.first_name,
-          last_name: data.last_name
-        })
-        .eq("id", authData.user.id);
+        });
         
-      if (updateError) {
-        console.error("Profile update error:", updateError);
-        throw updateError;
+        if (authError) {
+          console.error("Auth error:", authError);
+          throw authError;
+        }
+        
+        if (!authData.user) {
+          console.error("No user created");
+          throw new Error("No user created");
+        }
+        
+        console.log("User created successfully:", authData.user);
+        
+        // Return the temporary password for display
+        return { user: authData.user, password };
+      } catch (error) {
+        console.error("Error in createEmployee:", error);
+        throw error;
       }
-      
-      // TODO: In production, you would want to send an email to the user
-      // with their temporary password
-      console.log("Temporary password for", data.email, ":", password);
-      
-      return { user: authData.user, password };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
@@ -99,7 +86,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       console.error("Error creating employee:", error);
       toast({
         title: "Error",
-        description: "Failed to create employee",
+        description: "Failed to create employee. Please try again.",
         variant: "destructive",
       });
     },
