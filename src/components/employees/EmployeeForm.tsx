@@ -40,16 +40,16 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       const password = Math.random().toString(36).slice(-12);
       
       try {
-        // Create the auth user
+        // Create the auth user with metadata including email
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: data.email,
           password: password,
           options: {
             data: {
+              email: data.email, // Include email in metadata
               first_name: data.first_name,
               last_name: data.last_name,
-              role: data.role,
-              email: data.email // Include email in metadata
+              role: data.role
             }
           }
         });
@@ -68,11 +68,9 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
         
         // Return the temporary password for display
         return { user: authData.user, password };
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error in createEmployee:", error);
-        // Extract the actual error message from the response if available
-        const errorMessage = error.message || "Failed to create employee";
-        throw new Error(errorMessage);
+        throw error;
       }
     },
     onSuccess: (data) => {
@@ -86,9 +84,10 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
     },
     onError: (error: any) => {
       console.error("Error creating employee:", error);
+      const errorMessage = error.message || "Failed to create employee. Please try again.";
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },

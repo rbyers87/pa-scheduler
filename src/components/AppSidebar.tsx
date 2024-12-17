@@ -35,7 +35,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>PAPD Scheduler</SidebarGroupLabel>
+          <SidebarGroupLabel>Workforce Scheduler</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
