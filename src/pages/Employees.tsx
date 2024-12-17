@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { v4 as uuidv4 } from 'uuid';
 import {
   Card,
   CardContent,
@@ -10,21 +11,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -33,6 +26,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -42,7 +36,7 @@ import {
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { Plus } from "lucide-react";
-import { v4 as uuidv4 } from 'uuid';
+import { useToast } from "@/components/ui/use-toast";
 
 type EmployeeFormData = {
   email: string;
@@ -52,19 +46,27 @@ type EmployeeFormData = {
 };
 
 const Employees = () => {
-  const [open, setOpen] = useState(false);
-  const { toast } = useToast();
+  const { session } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const form = useForm<EmployeeFormData>();
+
+  useEffect(() => {
+    console.log("Employees: Checking session", session);
+    if (!session) {
+      console.log("Employees: No session, redirecting to login");
+      navigate("/login");
+    }
+  }, [session, navigate]);
 
   const { data: employees, isLoading } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
-      console.log("Fetching employees");
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .order("first_name");
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
@@ -74,10 +76,9 @@ const Employees = () => {
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
       console.log("Creating employee:", data);
-      // Generate a UUID for the new employee
       const employeeData = {
         ...data,
-        id: uuidv4(), // Add UUID for the id field
+        id: uuidv4(),
       };
       
       const { error } = await supabase
@@ -88,15 +89,17 @@ const Employees = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
-      toast({ title: "Employee added successfully" });
-      setOpen(false);
+      toast({
+        title: "Success",
+        description: "Employee created successfully",
+      });
       form.reset();
     },
     onError: (error) => {
       console.error("Error creating employee:", error);
       toast({
-        title: "Error adding employee",
-        description: "Please try again",
+        title: "Error",
+        description: "Failed to create employee",
         variant: "destructive",
       });
     },
@@ -106,14 +109,18 @@ const Employees = () => {
     createEmployee.mutate(data);
   };
 
+  if (!session) {
+    return null;
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Employee Management</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <h2 className="text-3xl font-bold tracking-tight">Employees</h2>
+        <Dialog>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Add Employee
             </Button>
           </DialogTrigger>
@@ -130,7 +137,7 @@ const Employees = () => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" {...field} />
+                        <Input {...field} type="email" required />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -143,7 +150,7 @@ const Employees = () => {
                     <FormItem>
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} required />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -156,7 +163,7 @@ const Employees = () => {
                     <FormItem>
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} required />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -178,52 +185,51 @@ const Employees = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="employee">Employee</SelectItem>
-                          <SelectItem value="supervisor">Supervisor</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="supervisor">Supervisor</SelectItem>
+                          <SelectItem value="employee">Employee</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit">Add Employee</Button>
+                <Button type="submit" className="w-full">
+                  Create Employee
+                </Button>
               </form>
             </Form>
           </DialogContent>
         </Dialog>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Employee Directory</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div>Loading...</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {employees?.map((employee) => (
-                  <TableRow key={employee.id}>
-                    <TableCell>
-                      {employee.first_name} {employee.last_name}
-                    </TableCell>
-                    <TableCell>{employee.email}</TableCell>
-                    <TableCell className="capitalize">{employee.role}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+
+      <div className="grid gap-4">
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-6">Loading employees...</CardContent>
+          </Card>
+        ) : employees?.length === 0 ? (
+          <Card>
+            <CardContent className="p-6">No employees found.</CardContent>
+          </Card>
+        ) : (
+          employees?.map((employee) => (
+            <Card key={employee.id}>
+              <CardHeader>
+                <CardTitle>
+                  {employee.first_name} {employee.last_name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500">Email: {employee.email}</p>
+                  <p className="text-sm text-gray-500">Role: {employee.role}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 };
