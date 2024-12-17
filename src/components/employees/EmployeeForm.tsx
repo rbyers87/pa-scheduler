@@ -40,7 +40,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       const password = Math.random().toString(36).slice(-12);
       
       try {
-        // Create the auth user
+        // Create the auth user with minimal metadata
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: data.email,
           password: password,
@@ -49,8 +49,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
               first_name: data.first_name,
               last_name: data.last_name,
               role: data.role
-            },
-            emailRedirectTo: `${window.location.origin}/login`
+            }
           }
         });
         
