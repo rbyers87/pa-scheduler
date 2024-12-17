@@ -27,8 +27,8 @@ const Login = () => {
 
       if (error) throw error;
 
-      console.log("Login: Success, navigating to schedule");
-      navigate("/schedule");
+      console.log("Login: Success, navigating to /");
+      navigate("/");
       toast({
         title: "Logged in successfully",
       });

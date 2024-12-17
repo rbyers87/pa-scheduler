@@ -1,7 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Calendar, Clock, FileText } from "lucide-react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { session } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log("Index: Checking session", session);
+    if (!session) {
+      console.log("Index: No session, redirecting to login");
+      navigate("/login");
+    }
+  }, [session, navigate]);
+
   const stats = [
     {
       title: "Employees",
@@ -28,6 +42,10 @@ const Index = () => {
       description: "Generated this month",
     },
   ];
+
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
