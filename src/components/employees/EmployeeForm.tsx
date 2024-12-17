@@ -40,12 +40,13 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       const password = Math.random().toString(36).slice(-12);
       
       try {
-        // Create the auth user with minimal metadata
+        // Create the auth user with metadata including email
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: data.email,
           password: password,
           options: {
             data: {
+              email: data.email, // Include email in metadata
               first_name: data.first_name,
               last_name: data.last_name,
               role: data.role
