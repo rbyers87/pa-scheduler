@@ -36,13 +36,18 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
     mutationFn: async (data: EmployeeFormData) => {
       console.log("Creating employee:", data);
       
-      // First create the auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Generate a random password for the initial signup
+      const password = Math.random().toString(36).slice(-12);
+      
+      // Create the auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
-        email_confirm: true,
-        user_metadata: {
-          first_name: data.first_name,
-          last_name: data.last_name,
+        password: password,
+        options: {
+          data: {
+            first_name: data.first_name,
+            last_name: data.last_name,
+          }
         }
       });
       
@@ -61,6 +66,10 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
         .eq("id", authData.user.id);
         
       if (updateError) throw updateError;
+      
+      // TODO: In production, you would want to send an email to the user
+      // with their temporary password
+      console.log("Temporary password for", data.email, ":", password);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
