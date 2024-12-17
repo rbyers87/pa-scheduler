@@ -39,7 +39,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       // Generate a random password for the initial signup
       const password = Math.random().toString(36).slice(-12);
       
-      // Create the auth user
+      // Create the auth user with metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: password,
@@ -47,17 +47,25 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
           data: {
             first_name: data.first_name,
             last_name: data.last_name,
+            role: data.role
           }
         }
       });
       
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("No user created");
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw authError;
+      }
       
-      // Wait a moment for the trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!authData.user) {
+        console.error("No user created");
+        throw new Error("No user created");
+      }
       
-      // Now update the profile with the role
+      // Wait for the trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Now update the profile with additional data
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ 
@@ -67,7 +75,10 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
         })
         .eq("id", authData.user.id);
         
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Profile update error:", updateError);
+        throw updateError;
+      }
       
       // TODO: In production, you would want to send an email to the user
       // with their temporary password
