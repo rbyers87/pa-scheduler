@@ -7,27 +7,46 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Define the types for schedule and employee
+interface Employee {
+  first_name: string;
+  last_name: string;
+  id: string;
+}
+
+interface Schedule {
+  id: string;
+  start_time: string;
+  end_time: string;
+  employee: Employee;
+}
+
 export function ScheduleCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
 
-  const { data: schedules, isLoading } = useQuery({
+  const { data: schedules, isLoading, error } = useQuery<Schedule[]>({
     queryKey: ["schedules", date ? format(date, "yyyy-MM") : null],
     queryFn: async () => {
       if (!date) return [];
       const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
       const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-      
+
       const { data, error } = await supabase
         .from("schedules")
-        .select(`*, employee:profiles(first_name, last_name)`)
+        .select(`*, employee:profiles(first_name, last_name, id)`)
         .gte("start_time", startOfMonth.toISOString())
         .lte("end_time", endOfMonth.toISOString());
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!date,
   });
+
+  // Check for error loading data
+  if (error) {
+    return <div>Error loading schedule data!</div>;
+  }
 
   // Map your schedule data to FullCalendar events format
   const events = schedules?.map((schedule) => ({

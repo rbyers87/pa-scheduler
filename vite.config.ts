@@ -20,10 +20,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     rollupOptions: {
-      external: [
-        "@fullcalendar/interaction",  // Externalize the interaction plugin
-        "@fullcalendar/timegrid",      // Externalize the timegrid plugin
-      ],
+      external: []  // Remove externalization for FullCalendar
     },
   },
 }));
