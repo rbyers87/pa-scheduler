@@ -77,6 +77,48 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_schedules: {
+        Row: {
+          created_at: string
+          days: number[]
+          employee_id: string
+          id: string
+          shift_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          days: number[]
+          employee_id: string
+          id?: string
+          shift_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          days?: number[]
+          employee_id?: string
+          id?: string
+          shift_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_schedules_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_schedules_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedules: {
         Row: {
           created_at: string
@@ -111,6 +153,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shifts: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          name: string
+          start_time: string
+          type: Database["public"]["Enums"]["shift_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          name: string
+          start_time: string
+          type: Database["public"]["Enums"]["shift_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          name?: string
+          start_time?: string
+          type?: Database["public"]["Enums"]["shift_type"]
+          updated_at?: string
+        }
+        Relationships: []
       }
       time_off_requests: {
         Row: {
@@ -164,6 +236,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      shift_type: "day" | "evening" | "night"
       user_role: "admin" | "supervisor" | "employee"
     }
     CompositeTypes: {
