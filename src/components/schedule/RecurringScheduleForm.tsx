@@ -15,7 +15,9 @@ export function RecurringScheduleForm() {
   const [selectedShift, setSelectedShift] = useState<string>();
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>();
-  const [beginDate, setBeginDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [beginDate, setBeginDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
   const [endDate, setEndDate] = useState<string>();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -29,7 +31,7 @@ export function RecurringScheduleForm() {
         .select("role")
         .eq("id", user.id)
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -38,17 +40,23 @@ export function RecurringScheduleForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!userProfile || !["admin", "supervisor"].includes(userProfile.role)) {
       toast({
         title: "Permission Denied",
-        description: "Only administrators and supervisors can create recurring schedules",
+        description:
+          "Only administrators and supervisors can create recurring schedules",
         variant: "destructive",
       });
       return;
     }
 
-    if (!selectedShift || !selectedEmployee || selectedDays.length === 0 || !beginDate) {
+    if (
+      !selectedShift ||
+      !selectedEmployee ||
+      selectedDays.length === 0 ||
+      !beginDate
+    ) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -72,7 +80,7 @@ export function RecurringScheduleForm() {
         end_time: endTime ? endTime.toISOString() : null, // Optional, use null if not provided
       });
 
-      const { error } = await supabase.from("recurring_schedules").insert({
+      const { data, error } = await supabase.from("recurring_schedules").insert({
         employee_id: selectedEmployee,
         shift_id: selectedShift,
         days: selectedDays,
@@ -82,10 +90,11 @@ export function RecurringScheduleForm() {
       });
 
       if (error) {
+        // Enhanced error logging to capture details
         console.error("Error creating recurring schedule:", error.message || error.details || error);
         toast({
           title: "Error",
-          description: "Failed to create recurring schedule",
+          description: `Failed to create recurring schedule: ${error.message || error.details}`,
           variant: "destructive",
         });
         return;
@@ -100,9 +109,10 @@ export function RecurringScheduleForm() {
       setSelectedShift(undefined);
       setSelectedDays([]);
       setSelectedEmployee(undefined);
-      setBeginDate(new Date().toISOString().split('T')[0]);
+      setBeginDate(new Date().toISOString().split("T")[0]);
       setEndDate(undefined);
     } catch (error) {
+      // Catch any unexpected errors
       console.error("Error creating recurring schedule:", error);
       toast({
         title: "Error",
@@ -159,7 +169,7 @@ export function RecurringScheduleForm() {
               type="date"
               value={beginDate}
               onChange={(e) => setBeginDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
+              min={new Date().toISOString().split("T")[0]}
             />
           </div>
 
