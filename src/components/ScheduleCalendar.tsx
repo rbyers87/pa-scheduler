@@ -6,6 +6,7 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RRule } from "rrule"; // Import the recurrence library
 
 // Define the types for schedule and employee
 interface Employee {
@@ -18,6 +19,7 @@ interface Schedule {
   id: string;
   start_time: string;
   end_time: string;
+  recurrence: string | null; // Store recurrence pattern here, if any
   employee: Employee;
 }
 
@@ -48,15 +50,36 @@ export function ScheduleCalendar() {
     return <div>Error loading schedule data!</div>;
   }
 
+  // Helper function to generate recurring events
+  const getRecurringEvents = (schedule: Schedule) => {
+    if (!schedule.recurrence) return [schedule]; // If no recurrence, just return the original event.
+
+    const rrule = new RRule({
+      freq: RRule.WEEKLY, // Assume weekly recurrence for simplicity
+      dtstart: new Date(schedule.start_time),
+      until: new Date(schedule.end_time), // or set a custom end date for the recurrence
+      count: 10, // Optional: specify how many occurrences
+    });
+
+    // Generate all dates for the recurring event
+    const recurringDates = rrule.all();
+
+    // Create events for all generated dates
+    return recurringDates.map((date) => ({
+      title: `${schedule.employee.first_name} ${schedule.employee.last_name}`,
+      start: date.toISOString(),
+      end: new Date(date.getTime() + (new Date(schedule.end_time).getTime() - new Date(schedule.start_time).getTime())).toISOString(),
+      extendedProps: {
+        employeeId: schedule.employee.id,
+      },
+    }));
+  };
+
   // Map your schedule data to FullCalendar events format
-  const events = schedules?.map((schedule) => ({
-    title: `${schedule.employee.first_name} ${schedule.employee.last_name}`,
-    start: schedule.start_time,
-    end: schedule.end_time,
-    extendedProps: {
-      employeeId: schedule.employee.id,
-    },
-  })) || [];
+  const events = schedules?.reduce((acc: any[], schedule) => {
+    const recurringEvents = getRecurringEvents(schedule); // Get recurring events
+    return [...acc, ...recurringEvents]; // Add them to the events array
+  }, []) || [];
 
   // Handle event drag-and-drop
   const handleEventDrop = (info: any) => {

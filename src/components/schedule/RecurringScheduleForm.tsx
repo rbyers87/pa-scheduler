@@ -15,9 +15,7 @@ export function RecurringScheduleForm() {
   const [selectedShift, setSelectedShift] = useState<string>();
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>();
-  const [beginDate, setBeginDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [beginDate, setBeginDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState<string>();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -31,7 +29,7 @@ export function RecurringScheduleForm() {
         .select("role")
         .eq("id", user.id)
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -40,7 +38,7 @@ export function RecurringScheduleForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!userProfile || !["admin", "supervisor"].includes(userProfile.role)) {
       toast({
         title: "Permission Denied",
@@ -68,22 +66,38 @@ export function RecurringScheduleForm() {
         end_date: endDate || null,
       });
 
-      const { error } = await supabase.from("recurring_schedules").insert({
-        employee_id: selectedEmployee,
-        shift_id: selectedShift,
-        days: selectedDays,
-        begin_date: beginDate,
-        end_date: endDate || null,
-      });
+      const beginDateObj = new Date(beginDate);
+      const endDateObj = endDate ? new Date(endDate) : null;
 
-      if (error) throw error;
+      // Loop through the selected days and generate schedules for each occurrence
+      let currentDate = beginDateObj;
+      const createdSchedules = [];
+
+      while (!endDateObj || currentDate <= endDateObj) {
+        // Check if the current date matches one of the selected days
+        if (selectedDays.includes(currentDate.getDay())) {
+          // Create schedule for this date
+          const { error } = await supabase.from("schedules").insert({
+            employee_id: selectedEmployee,
+            shift_id: selectedShift,
+            start_time: new Date(currentDate.setHours(0, 0, 0, 0)), // Adjust time to match shift start
+            end_time: new Date(currentDate.setHours(0, 0, 0, 0)), // Adjust time to match shift end
+          });
+
+          if (error) throw error;
+          createdSchedules.push(currentDate.toISOString()); // Keep track of created schedules
+        }
+
+        // Move to next week for the next iteration
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
 
       toast({
         title: "Success",
         description: "Recurring schedule created successfully",
       });
 
-      // Reset form
+      // Reset form after successful creation
       setSelectedShift(undefined);
       setSelectedDays([]);
       setSelectedEmployee(undefined);
