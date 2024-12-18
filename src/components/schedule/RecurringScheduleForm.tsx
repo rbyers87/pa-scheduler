@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Select,
   SelectContent,
@@ -30,6 +31,24 @@ export function RecurringScheduleForm() {
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Get user role
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   const { data: employees } = useQuery({
     queryKey: ["employees"],
@@ -46,6 +65,17 @@ export function RecurringScheduleForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if user has permission
+    if (!userProfile || !["admin", "supervisor"].includes(userProfile.role)) {
+      toast({
+        title: "Permission Denied",
+        description: "Only administrators and supervisors can create recurring schedules",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!selectedShift || !selectedEmployee || selectedDays.length === 0) {
       toast({
         title: "Error",
@@ -56,13 +86,22 @@ export function RecurringScheduleForm() {
     }
 
     try {
+      console.log("Creating recurring schedule:", {
+        employee_id: selectedEmployee,
+        shift_id: selectedShift,
+        days: selectedDays,
+      });
+
       const { error } = await supabase.from("recurring_schedules").insert({
         employee_id: selectedEmployee,
         shift_id: selectedShift,
         days: selectedDays,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating recurring schedule:", error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -90,6 +129,22 @@ export function RecurringScheduleForm() {
         : [...current, day]
     );
   };
+
+  // If user is not admin/supervisor, show message
+  if (userProfile && !["admin", "supervisor"].includes(userProfile.role)) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Set Recurring Schedule</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            You do not have permission to create recurring schedules. Please contact an administrator.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
