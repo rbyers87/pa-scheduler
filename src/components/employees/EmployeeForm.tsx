@@ -35,10 +35,10 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
       console.log("Creating employee with data:", data);
-
+      
       // Generate a random password for the initial signup
       const password = Math.random().toString(36).slice(-12);
-
+      
       try {
         // Create the auth user with metadata including email
         const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -49,43 +49,23 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
               email: data.email, // Include email in metadata
               first_name: data.first_name,
               last_name: data.last_name,
-              role: data.role,
-            },
-          },
+              role: data.role
+            }
+          }
         });
-
+        
         if (authError) {
           console.error("Auth error:", authError);
           throw authError;
         }
-
+        
         if (!authData.user) {
           console.error("No user created");
           throw new Error("No user created");
         }
-
+        
         console.log("User created successfully:", authData.user);
-
-        // Add the employee to the "employees" table with their details
-        const { data: employeeData, error: employeeError } = await supabase
-          .from("employees")
-          .insert([
-            {
-              id: authData.user.id, // Link employee ID to auth user ID
-              email: data.email,
-              first_name: data.first_name,
-              last_name: data.last_name,
-              role: data.role,
-            },
-          ]);
-
-        if (employeeError) {
-          console.error("Error inserting into employees table:", employeeError);
-          throw employeeError;
-        }
-
-        console.log("Employee record added:", employeeData);
-
+        
         // Return the temporary password for display
         return { user: authData.user, password };
       } catch (error) {
@@ -104,8 +84,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
     },
     onError: (error: any) => {
       console.error("Error creating employee:", error);
-      const errorMessage =
-        error.message || "Failed to create employee. Please try again.";
+      const errorMessage = error.message || "Failed to create employee. Please try again.";
       toast({
         title: "Error",
         description: errorMessage,
@@ -166,7 +145,10 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Role</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a role" />
