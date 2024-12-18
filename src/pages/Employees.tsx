@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { EmployeeForm } from "@/components/employees/EmployeeForm";
+import { EditEmployeeDialog } from "@/components/employees/EditEmployeeDialog";
 
 const Employees = () => {
   const { session } = useAuth();
@@ -81,10 +82,11 @@ const Employees = () => {
         ) : (
           employees?.map((employee) => (
             <Card key={employee.id}>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle>
                   {employee.first_name} {employee.last_name}
                 </CardTitle>
+                <EditEmployeeDialog employee={employee} />
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">

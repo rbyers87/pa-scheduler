@@ -6,11 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -44,25 +52,24 @@ const Login = () => {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/settings`,
       });
 
       if (error) throw error;
 
       toast({
-        title: "Sign up successful",
-        description: "Please check your email to verify your account",
+        title: "Password reset email sent",
+        description: "Please check your email for the reset link",
       });
     } catch (error: any) {
       toast({
-        title: "Error signing up",
+        title: "Error sending reset email",
         description: error.message,
         variant: "destructive",
       });
@@ -111,15 +118,43 @@ const Login = () => {
               >
                 {loading ? "Loading..." : "Login"}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleSignUp}
-                disabled={loading}
-              >
-                Sign Up
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="w-full"
+                    disabled={loading}
+                  >
+                    Forgot Password?
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Reset Password</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handlePasswordReset} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="resetEmail">Email</Label>
+                      <Input
+                        id="resetEmail"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={loading}
+                    >
+                      Send Reset Link
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </form>
         </CardContent>
