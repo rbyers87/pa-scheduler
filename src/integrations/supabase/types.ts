@@ -79,25 +79,31 @@ export type Database = {
       }
       recurring_schedules: {
         Row: {
+          begin_date: string
           created_at: string
           days: number[]
           employee_id: string
+          end_date: string | null
           id: string
           shift_id: string
           updated_at: string
         }
         Insert: {
+          begin_date?: string
           created_at?: string
           days: number[]
           employee_id: string
+          end_date?: string | null
           id?: string
           shift_id: string
           updated_at?: string
         }
         Update: {
+          begin_date?: string
           created_at?: string
           days?: number[]
           employee_id?: string
+          end_date?: string | null
           id?: string
           shift_id?: string
           updated_at?: string

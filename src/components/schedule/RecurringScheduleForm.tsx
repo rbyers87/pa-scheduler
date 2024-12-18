@@ -2,38 +2,26 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShiftSelector } from "./ShiftSelector";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-const DAYS = [
-  { label: "Sunday", value: 0 },
-  { label: "Monday", value: 1 },
-  { label: "Tuesday", value: 2 },
-  { label: "Wednesday", value: 3 },
-  { label: "Thursday", value: 4 },
-  { label: "Friday", value: 5 },
-  { label: "Saturday", value: 6 },
-];
+import { EmployeeSelect } from "./EmployeeSelect";
+import { DaysSelect } from "./DaysSelect";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export function RecurringScheduleForm() {
   const [selectedShift, setSelectedShift] = useState<string>();
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>();
+  const [beginDate, setBeginDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+  const [endDate, setEndDate] = useState<string>();
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Get user role
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
@@ -50,23 +38,9 @@ export function RecurringScheduleForm() {
     enabled: !!user?.id,
   });
 
-  const { data: employees } = useQuery({
-    queryKey: ["employees"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name")
-        .order("first_name");
-      
-      if (error) throw error;
-      return data;
-    },
-  });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if user has permission
     if (!userProfile || !["admin", "supervisor"].includes(userProfile.role)) {
       toast({
         title: "Permission Denied",
@@ -76,7 +50,7 @@ export function RecurringScheduleForm() {
       return;
     }
 
-    if (!selectedShift || !selectedEmployee || selectedDays.length === 0) {
+    if (!selectedShift || !selectedEmployee || selectedDays.length === 0 || !beginDate) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -90,18 +64,19 @@ export function RecurringScheduleForm() {
         employee_id: selectedEmployee,
         shift_id: selectedShift,
         days: selectedDays,
+        begin_date: beginDate,
+        end_date: endDate || null,
       });
 
       const { error } = await supabase.from("recurring_schedules").insert({
         employee_id: selectedEmployee,
         shift_id: selectedShift,
         days: selectedDays,
+        begin_date: beginDate,
+        end_date: endDate || null,
       });
 
-      if (error) {
-        console.error("Error creating recurring schedule:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -112,6 +87,8 @@ export function RecurringScheduleForm() {
       setSelectedShift(undefined);
       setSelectedDays([]);
       setSelectedEmployee(undefined);
+      setBeginDate(new Date().toISOString().split('T')[0]);
+      setEndDate(undefined);
     } catch (error) {
       console.error("Error creating recurring schedule:", error);
       toast({
@@ -120,14 +97,6 @@ export function RecurringScheduleForm() {
         variant: "destructive",
       });
     }
-  };
-
-  const toggleDay = (day: number) => {
-    setSelectedDays((current) =>
-      current.includes(day)
-        ? current.filter((d) => d !== day)
-        : [...current, day]
-    );
   };
 
   // If user is not admin/supervisor, show message
@@ -153,24 +122,10 @@ export function RecurringScheduleForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>Employee</Label>
-            <Select
-              value={selectedEmployee}
-              onValueChange={setSelectedEmployee}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select an employee" />
-              </SelectTrigger>
-              <SelectContent>
-                {employees?.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.first_name} {employee.last_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <EmployeeSelect
+            value={selectedEmployee}
+            onValueChange={setSelectedEmployee}
+          />
 
           <div className="space-y-2">
             <Label>Shift</Label>
@@ -180,20 +135,29 @@ export function RecurringScheduleForm() {
             />
           </div>
 
+          <DaysSelect
+            selectedDays={selectedDays}
+            onDaysChange={setSelectedDays}
+          />
+
           <div className="space-y-2">
-            <Label>Work Days</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {DAYS.map((day) => (
-                <div key={day.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`day-${day.value}`}
-                    checked={selectedDays.includes(day.value)}
-                    onCheckedChange={() => toggleDay(day.value)}
-                  />
-                  <Label htmlFor={`day-${day.value}`}>{day.label}</Label>
-                </div>
-              ))}
-            </div>
+            <Label>Begin Date</Label>
+            <Input
+              type="date"
+              value={beginDate}
+              onChange={(e) => setBeginDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>End Date (Optional)</Label>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              min={beginDate}
+            />
           </div>
 
           <Button type="submit">Create Recurring Schedule</Button>
