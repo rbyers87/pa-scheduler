@@ -29,7 +29,7 @@ export function RecurringScheduleForm() {
         .select("role")
         .eq("id", user.id)
         .single();
-
+      
       if (error) throw error;
       return data;
     },
@@ -47,7 +47,7 @@ export function RecurringScheduleForm() {
       });
       return;
     }
-  
+
     if (!selectedShift || !selectedEmployee || selectedDays.length === 0 || !beginDate) {
       toast({
         title: "Error",
@@ -56,38 +56,46 @@ export function RecurringScheduleForm() {
       });
       return;
     }
-  
+
     try {
-      // Use beginDate to set the start time and end time
-      const currentDate = new Date(beginDate); // Start date from input
-      const startTime = new Date(currentDate.setHours(0, 0, 0, 0)).toISOString(); // Start of the day, formatted as ISO string
-      const endTime = new Date(currentDate.setHours(23, 59, 59, 999)).toISOString(); // End of the day, formatted as ISO string
-  
+      // Additional logging to verify the data being sent
+      const startTime = new Date(beginDate); // Assuming you want the start time at midnight
+      const endTime = endDate ? new Date(endDate) : null; // Use the end date if available
+
+      // Log the data to be inserted
       console.log("Creating recurring schedule:", {
         employee_id: selectedEmployee,
         shift_id: selectedShift,
         days: selectedDays,
         begin_date: beginDate,
-        start_time: startTime,
-        end_time: endTime,
+        start_time: startTime.toISOString(), // Ensure it's in the correct format
+        end_time: endTime ? endTime.toISOString() : null, // Optional, use null if not provided
       });
-  
+
       const { error } = await supabase.from("recurring_schedules").insert({
         employee_id: selectedEmployee,
         shift_id: selectedShift,
         days: selectedDays,
         begin_date: beginDate,
-        start_time: startTime, // Pass the ISO formatted date
-        end_time: endTime, // Pass the ISO formatted date
+        start_time: startTime.toISOString(),
+        end_time: endTime ? endTime.toISOString() : null,
       });
-  
-      if (error) throw error;
-  
+
+      if (error) {
+        console.error("Error creating recurring schedule:", error.message || error.details || error);
+        toast({
+          title: "Error",
+          description: "Failed to create recurring schedule",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Success",
         description: "Recurring schedule created successfully",
       });
-  
+
       // Reset form
       setSelectedShift(undefined);
       setSelectedDays([]);
@@ -103,7 +111,6 @@ export function RecurringScheduleForm() {
       });
     }
   };
-  
 
   // If user is not admin/supervisor, show message
   if (userProfile && !["admin", "supervisor"].includes(userProfile.role)) {
