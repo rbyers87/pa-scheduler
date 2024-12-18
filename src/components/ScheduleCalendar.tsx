@@ -1,9 +1,11 @@
-import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import FullCalendar from "@fullcalendar/react";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function ScheduleCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -17,18 +19,31 @@ export function ScheduleCalendar() {
       
       const { data, error } = await supabase
         .from("schedules")
-        .select(`
-          *,
-          employee:profiles(first_name, last_name)
-        `)
+        .select(`*, employee:profiles(first_name, last_name)`)
         .gte("start_time", startOfMonth.toISOString())
         .lte("end_time", endOfMonth.toISOString());
 
       if (error) throw error;
       return data;
     },
-    enabled: !!date
+    enabled: !!date,
   });
+
+  // Map your schedule data to FullCalendar events format
+  const events = schedules?.map((schedule) => ({
+    title: `${schedule.employee.first_name} ${schedule.employee.last_name}`,
+    start: schedule.start_time,
+    end: schedule.end_time,
+    extendedProps: {
+      employeeId: schedule.employee.id,
+    },
+  })) || [];
+
+  // Handle event drag-and-drop
+  const handleEventDrop = (info: any) => {
+    // Handle saving the new event time to the backend or updating the state
+    console.log("Event moved to:", info.event.start, info.event.end);
+  };
 
   return (
     <Card>
@@ -36,22 +51,20 @@ export function ScheduleCalendar() {
         <CardTitle>Monthly Schedule</CardTitle>
       </CardHeader>
       <CardContent className="p-4">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={setDate}
-          className="rounded-md border"
+        <FullCalendar
+          plugins={[timeGridPlugin, interactionPlugin]}
+          initialView="timeGridDay"
+          slotDuration="00:15:00"
+          allDaySlot={false}
+          slotMinTime="00:00:00"
+          slotMaxTime="24:00:00"
+          events={events}
+          editable={true}
+          eventDrop={handleEventDrop}
+          eventResize={handleEventDrop} // Optional: to handle resize events
+          dateClick={(info) => setDate(info.date)} // Update selected date
         />
         {isLoading && <p>Loading schedules...</p>}
-        {schedules && schedules.length > 0 && (
-          <div className="mt-4">
-            {schedules.map((schedule) => (
-              <div key={schedule.id} className="text-sm">
-                {schedule.employee.first_name} {schedule.employee.last_name}
-              </div>
-            ))}
-          </div>
-        )}
       </CardContent>
     </Card>
   );
