@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ShiftSelector } from "./ShiftSelector";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query"; // Added queryClient for refetching
 import { useAuth } from "@/contexts/AuthContext";
 import { EmployeeSelect } from "./EmployeeSelect";
 import { DaysSelect } from "./DaysSelect";
@@ -21,6 +21,7 @@ export function RecurringScheduleForm() {
   const [endDate, setEndDate] = useState<string>();
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient(); // Added for refetching
 
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile", user?.id],
@@ -66,18 +67,16 @@ export function RecurringScheduleForm() {
     }
 
     try {
-      // Additional logging to verify the data being sent
-      const startTime = new Date(beginDate); // Assuming you want the start time at midnight
-      const endTime = endDate ? new Date(endDate) : null; // Use the end date if available
+      const startTime = new Date(beginDate); // Assuming midnight start time
+      const endTime = endDate ? new Date(endDate) : null;
 
-      // Log the data to be inserted
       console.log("Creating recurring schedule:", {
         employee_id: selectedEmployee,
         shift_id: selectedShift,
         days: selectedDays,
         begin_date: beginDate,
-        start_time: startTime.toISOString(), // Ensure it's in the correct format
-        end_time: endTime ? endTime.toISOString() : null, // Optional, use null if not provided
+        start_time: startTime.toISOString(),
+        end_time: endTime ? endTime.toISOString() : null,
       });
 
       const { data, error } = await supabase.from("recurring_schedules").insert({
@@ -90,7 +89,6 @@ export function RecurringScheduleForm() {
       });
 
       if (error) {
-        // Enhanced error logging to capture details
         console.error("Error creating recurring schedule:", error.message || error.details || error);
         toast({
           title: "Error",
@@ -111,9 +109,11 @@ export function RecurringScheduleForm() {
       setSelectedEmployee(undefined);
       setBeginDate(new Date().toISOString().split("T")[0]);
       setEndDate(undefined);
+
+      // Trigger a refetch for the calendar or schedules
+      queryClient.invalidateQueries(["schedules"]); // Ensure your calendar query uses this key
     } catch (error) {
-      // Catch any unexpected errors
-      console.error("Error creating recurring schedule:", error);
+      console.error("Unexpected error creating recurring schedule:", error);
       toast({
         title: "Error",
         description: "Failed to create recurring schedule",
@@ -122,7 +122,6 @@ export function RecurringScheduleForm() {
     }
   };
 
-  // If user is not admin/supervisor, show message
   if (userProfile && !["admin", "supervisor"].includes(userProfile.role)) {
     return (
       <Card>
