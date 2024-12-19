@@ -47,13 +47,17 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
       role: "admin" | "supervisor" | "employee";
     }) => {
       console.log("Updating employee:", data);
-      
+
+      // Ensure session is valid
       if (!session?.user?.id) {
         console.error("No authenticated user found");
         throw new Error("You must be logged in to update employees");
       }
 
-      // First verify the current user is an admin
+      // Debug session data
+      console.log("Session ID:", session.user.id);
+
+      // Verify the current user's role
       const { data: currentUserProfile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
@@ -65,6 +69,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw new Error("Failed to verify user permissions");
       }
 
+      // Ensure user is an admin
       if (currentUserProfile?.role !== 'admin') {
         throw new Error("Only admins can update employee profiles");
       }
@@ -122,7 +127,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
       });
       return;
     }
-    
+
     updateEmployee.mutate({
       id: employee.id,
       first_name: firstName,
