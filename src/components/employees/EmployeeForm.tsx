@@ -97,7 +97,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       toast({
-        description: `Employee created successfully. Temporary password: ${data.password}`,
+        title: `Employee created successfully. Temporary password: ${data.password}`,
       });
       form.reset();
       onSuccess?.();
@@ -106,7 +106,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       console.error("Error creating employee:", error);
       const errorMessage = error.message || "Failed to create employee. Please try again.";
       toast({
-        description: errorMessage,
+        title: errorMessage,
         variant: "destructive",
       });
     },
@@ -115,7 +115,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
   const onSubmit = (data: EmployeeFormData) => {
     if (!session) {
       toast({
-        description: "You must be logged in to create employees",
+        title: "You must be logged in to create employees",
         variant: "destructive",
       });
       return;
