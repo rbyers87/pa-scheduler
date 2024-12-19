@@ -18,9 +18,14 @@ export function ScheduleList() {
   const { data: employees, isLoading, error } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
-      console.log("Checking auth session:", session?.user?.id);
-      if (!session) {
-        throw new Error("No authenticated session");
+      console.log("Fetching employees - Auth state:", { 
+        isAuthenticated: !!session,
+        userId: session?.user?.id 
+      });
+
+      if (!session?.user?.id) {
+        console.error("No authenticated user found");
+        throw new Error("You must be logged in to view employees");
       }
 
       const { data, error } = await supabase
@@ -29,11 +34,11 @@ export function ScheduleList() {
         .order("created_at", { ascending: false });
       
       if (error) {
-        console.error("Error fetching employees:", error);
+        console.error("Supabase query error:", error);
         throw error;
       }
       
-      console.log("Fetched employees:", data);
+      console.log("Successfully fetched employees:", data);
       return data;
     },
     meta: {
@@ -46,7 +51,7 @@ export function ScheduleList() {
         });
       }
     },
-    enabled: !!session // Only run query when session exists
+    enabled: !!session?.user?.id // Only run query when user is authenticated
   });
 
   if (error) {
