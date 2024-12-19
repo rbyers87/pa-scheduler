@@ -53,24 +53,34 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw new Error("You must be logged in to update employees");
       }
 
-      const { data: updatedEmployee, error } = await supabase
+      const { error: updateError } = await supabase
         .from("profiles")
         .update({
           first_name: data.first_name,
           last_name: data.last_name,
           role: data.role,
         })
-        .eq("id", data.id)
+        .eq("id", data.id);
+
+      if (updateError) {
+        console.error("Error updating profile:", updateError);
+        throw updateError;
+      }
+
+      // Fetch the updated employee data
+      const { data: updatedEmployee, error: fetchError } = await supabase
+        .from("profiles")
         .select("*")
+        .eq("id", data.id)
         .maybeSingle();
 
-      if (error) {
-        console.error("Error updating profile:", error);
-        throw error;
+      if (fetchError) {
+        console.error("Error fetching updated profile:", fetchError);
+        throw fetchError;
       }
 
       if (!updatedEmployee) {
-        throw new Error("Failed to update employee");
+        throw new Error("Failed to fetch updated employee");
       }
 
       console.log("Successfully updated employee:", updatedEmployee);
