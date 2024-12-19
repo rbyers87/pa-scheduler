@@ -35,7 +35,15 @@ const Login = () => {
 
       if (error) {
         console.error("Login: Error during login:", error);
-        if (error.message === "Invalid login credentials") {
+        
+        // Handle email not confirmed error specifically
+        if (error.message.includes("Email not confirmed")) {
+          toast({
+            title: "Email not confirmed",
+            description: "Please check your email for the confirmation link. For development, you can disable email confirmation in the Supabase dashboard.",
+            variant: "destructive",
+          });
+        } else if (error.message === "Invalid login credentials") {
           toast({
             title: "Login failed",
             description: "Invalid email or password. Please try again.",
