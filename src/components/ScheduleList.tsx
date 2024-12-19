@@ -8,22 +8,53 @@ import {
 } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export function ScheduleList() {
-  const { data: employees, isLoading } = useQuery({
+  const { toast } = useToast();
+  
+  const { data: employees, isLoading, error } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
+      console.log("Fetching employees from profiles table...");
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .order("first_name");
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching employees:", error);
+        throw error;
+      }
+      
+      console.log("Fetched employees:", data);
       return data;
+    },
+    onError: (error: Error) => {
+      console.error("Query error:", error);
+      toast({
+        title: "Error loading employees",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
-  if (isLoading) return <div>Loading...</div>;
+  if (error) {
+    return (
+      <div className="p-4 text-red-500">
+        Error loading employees: {error.message}
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return <div className="p-4">Loading employees...</div>;
+  }
+
+  if (!employees?.length) {
+    return <div className="p-4">No employees found.</div>;
+  }
 
   return (
     <div className="rounded-md border">
@@ -37,7 +68,7 @@ export function ScheduleList() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {employees?.map((employee) => (
+          {employees.map((employee) => (
             <TableRow key={employee.id}>
               <TableCell>
                 {employee.first_name} {employee.last_name}
