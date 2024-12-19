@@ -140,13 +140,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_employee_id"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "recurring_schedules_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
