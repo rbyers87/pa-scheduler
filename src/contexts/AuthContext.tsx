@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (initialSession) {
           setSession(initialSession);
           setUser(initialSession.user);
-          setAccessToken(initialSession.access_token);  // Storing access token
+          setAccessToken(initialSession.access_token);
         } else {
           setSession(null);
           setUser(null);
@@ -53,33 +53,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     initializeAuth();
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
-      console.log("Auth state changed:", _event, currentSession);
+    // Set up auth state change subscription
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, currentSession) => {
+        console.log("Auth state changed:", _event, currentSession);
 
-      if (currentSession) {
-        setSession(currentSession);
-        setUser(currentSession.user);
-        setAccessToken(currentSession.access_token);  // Update access token
+        if (currentSession) {
+          setSession(currentSession);
+          setUser(currentSession.user);
+          setAccessToken(currentSession.access_token);
 
-        if (_event === 'SIGNED_IN') {
-          console.log("User signed in, navigating to /");
-          navigate("/", { replace: true });
-        }
-      } else {
-        setSession(null);
-        setUser(null);
-        setAccessToken(null);
+          if (_event === 'SIGNED_IN') {
+            console.log("User signed in, navigating to /");
+            navigate("/", { replace: true });
+          }
+        } else {
+          setSession(null);
+          setUser(null);
+          setAccessToken(null);
 
-        if (_event === 'SIGNED_OUT') {
-          console.log("User signed out, navigating to login");
-          navigate("/login", { replace: true });
+          if (_event === 'SIGNED_OUT') {
+            console.log("User signed out, navigating to login");
+            navigate("/login", { replace: true });
+          }
         }
       }
-    });
+    );
 
+    // Cleanup subscription on unmount
     return () => {
       console.log("AuthProvider: Cleaning up subscriptions");
       subscription.unsubscribe();
@@ -104,7 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const value = {
     session,
     user,
-    access_token,  // Providing access token in context
+    access_token,
     signOut,
   };
 
