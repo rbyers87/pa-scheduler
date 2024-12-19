@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TimeBlock {
   time: string;
@@ -29,6 +30,7 @@ interface DailyScheduleProps {
 
 export function DailySchedule({ date }: DailyScheduleProps) {
   const { toast } = useToast();
+  const { session } = useAuth();
   
   // Generate time blocks for the day (96 blocks of 15 minutes each)
   const timeBlocks: TimeBlock[] = Array.from({ length: 96 }, (_, index) => {
@@ -38,9 +40,19 @@ export function DailySchedule({ date }: DailyScheduleProps) {
     return { time, hasSchedule: false };
   });
 
-  const { data: schedules, refetch } = useQuery({
+  const { data: schedules, refetch, isLoading, error } = useQuery({
     queryKey: ["schedules", date],
     queryFn: async () => {
+      console.log("Fetching schedules - Auth state:", { 
+        isAuthenticated: !!session,
+        userId: session?.user?.id 
+      });
+
+      if (!session?.user?.id) {
+        console.error("No authenticated user found");
+        throw new Error("You must be logged in to view schedules");
+      }
+
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
       
@@ -58,29 +70,26 @@ export function DailySchedule({ date }: DailyScheduleProps) {
         .gte("start_time", startOfDay.toISOString())
         .lte("end_time", endOfDay.toISOString());
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase query error:", error);
+        throw error;
+      }
+      
+      console.log("Successfully fetched schedules:", data);
       return data as Schedule[];
     },
-  });
-
-  // Map schedules to time blocks
-  if (schedules) {
-    schedules.forEach((schedule) => {
-      const startTime = new Date(schedule.start_time);
-      const endTime = new Date(schedule.end_time);
-      
-      const startIndex = (startTime.getHours() * 4) + Math.floor(startTime.getMinutes() / 15);
-      const endIndex = (endTime.getHours() * 4) + Math.floor(endTime.getMinutes() / 15);
-      
-      for (let i = startIndex; i < endIndex; i++) {
-        if (timeBlocks[i]) {
-          timeBlocks[i].hasSchedule = true;
-          timeBlocks[i].scheduleId = schedule.id;
-          timeBlocks[i].employeeName = `${schedule.employee.first_name} ${schedule.employee.last_name}`;
-        }
+    meta: {
+      onError: (error: Error) => {
+        console.error("Query error:", error);
+        toast({
+          title: "Error loading schedules",
+          description: error.message,
+          variant: "destructive",
+        });
       }
-    });
-  }
+    },
+    enabled: !!session?.user?.id // Only run query when user is authenticated
+  });
 
   const handleDeleteSchedule = async (scheduleId: string) => {
     try {
@@ -106,6 +115,37 @@ export function DailySchedule({ date }: DailyScheduleProps) {
       });
     }
   };
+
+  if (error) {
+    return (
+      <div className="p-4 text-red-500">
+        Error loading schedules: {error.message}
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return <div className="p-4">Loading schedules...</div>;
+  }
+
+  // Map schedules to time blocks
+  if (schedules) {
+    schedules.forEach((schedule) => {
+      const startTime = new Date(schedule.start_time);
+      const endTime = new Date(schedule.end_time);
+      
+      const startIndex = (startTime.getHours() * 4) + Math.floor(startTime.getMinutes() / 15);
+      const endIndex = (endTime.getHours() * 4) + Math.floor(endTime.getMinutes() / 15);
+      
+      for (let i = startIndex; i < endIndex; i++) {
+        if (timeBlocks[i]) {
+          timeBlocks[i].hasSchedule = true;
+          timeBlocks[i].scheduleId = schedule.id;
+          timeBlocks[i].employeeName = `${schedule.employee.first_name} ${schedule.employee.last_name}`;
+        }
+      }
+    });
+  }
 
   return (
     <Card className="p-4">
