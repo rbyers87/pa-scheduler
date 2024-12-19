@@ -18,7 +18,7 @@ export function ScheduleList() {
   const { data: employees, isLoading, error } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
-      console.log("Fetching employees from profiles table...");
+      console.log("Checking auth session:", session?.user?.id);
       if (!session) {
         throw new Error("No authenticated session");
       }
