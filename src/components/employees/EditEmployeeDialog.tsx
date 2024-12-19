@@ -53,35 +53,40 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw new Error("You must be logged in to update employees");
       }
 
-      // First update the profile
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          first_name: data.first_name,
-          last_name: data.last_name,
-          role: data.role,
-        })
-        .eq("id", data.id);
+      try {
+        // Update the profile
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            first_name: data.first_name,
+            last_name: data.last_name,
+            role: data.role,
+          })
+          .eq("id", data.id);
 
-      if (updateError) {
-        console.error("Error updating profile:", updateError);
-        throw updateError;
+        if (updateError) {
+          console.error("Error updating profile:", updateError);
+          throw updateError;
+        }
+
+        // Fetch the updated profile
+        const { data: updatedProfile, error: fetchError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", data.id)
+          .single();
+
+        if (fetchError) {
+          console.error("Error fetching updated profile:", fetchError);
+          throw fetchError;
+        }
+
+        console.log("Successfully updated profile:", updatedProfile);
+        return updatedProfile;
+      } catch (error) {
+        console.error("Error in update operation:", error);
+        throw error;
       }
-
-      // Then fetch the updated profile
-      const { data: updatedProfile, error: fetchError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", data.id)
-        .single();
-
-      if (fetchError) {
-        console.error("Error fetching updated profile:", fetchError);
-        throw fetchError;
-      }
-
-      console.log("Successfully updated profile:", updatedProfile);
-      return updatedProfile;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
