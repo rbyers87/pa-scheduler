@@ -9,14 +9,20 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function ScheduleList() {
   const { toast } = useToast();
+  const { session } = useAuth();
   
   const { data: employees, isLoading, error } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
       console.log("Fetching employees from profiles table...");
+      if (!session) {
+        throw new Error("No authenticated session");
+      }
+
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -30,14 +36,17 @@ export function ScheduleList() {
       console.log("Fetched employees:", data);
       return data;
     },
-    onError: (error: Error) => {
-      console.error("Query error:", error);
-      toast({
-        title: "Error loading employees",
-        description: error.message,
-        variant: "destructive",
-      });
+    meta: {
+      onError: (error: Error) => {
+        console.error("Query error:", error);
+        toast({
+          title: "Error loading employees",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     },
+    enabled: !!session // Only run query when session exists
   });
 
   if (error) {
