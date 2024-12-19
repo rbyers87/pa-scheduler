@@ -34,7 +34,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState(employee.first_name || "");
   const [lastName, setLastName] = useState(employee.last_name || "");
-  const [role, setRole] = useState<"admin" | "supervisor" | "employee">(employee.role);
+  const [role, setRole] = useState(employee.role);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { session } = useAuth();
@@ -58,7 +58,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         .from("profiles")
         .select("role")
         .eq("id", session.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error("Error fetching user profile:", profileError);
@@ -85,7 +85,24 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw updateError;
       }
 
-      return data;
+      // Fetch and return the updated employee data
+      const { data: updatedEmployee, error: fetchError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", data.id)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error("Error fetching updated profile:", fetchError);
+        throw fetchError;
+      }
+
+      if (!updatedEmployee) {
+        throw new Error("Failed to fetch updated employee");
+      }
+
+      console.log("Successfully updated employee:", updatedEmployee);
+      return updatedEmployee;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
