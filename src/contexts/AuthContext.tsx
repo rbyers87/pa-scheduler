@@ -7,27 +7,27 @@ import { useToast } from "@/components/ui/use-toast";
 interface AuthContextType {
   session: Session | null | undefined;
   user: User | null;
-  accessToken: string | null; // Add the accessToken type
+  access_token: string | null;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: undefined,
   user: null,
-  accessToken: null, // Initialize accessToken as null
+  access_token: null,
   signOut: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [user, setUser] = useState<User | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null); // State for accessToken
+  const [access_token, setAccessToken] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     console.log("AuthProvider: Setting up auth subscriptions");
-    
+
     // Get initial session
     const initializeAuth = async () => {
       try {
@@ -36,18 +36,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (initialSession) {
           setSession(initialSession);
           setUser(initialSession.user);
-          setAccessToken(initialSession.access_token); // Set access token when session is retrieved
+          setAccessToken(initialSession.access_token);  // Storing access token
         } else {
           setSession(null);
           setUser(null);
-          setAccessToken(null); // Reset access token if no session
+          setAccessToken(null);
           console.log("AuthProvider: No initial session found");
         }
       } catch (error) {
         console.error("Error getting initial session:", error);
         setSession(null);
         setUser(null);
-        setAccessToken(null); // Reset access token on error
+        setAccessToken(null);
       }
     };
 
@@ -58,12 +58,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
       console.log("Auth state changed:", _event, currentSession);
-      
+
       if (currentSession) {
         setSession(currentSession);
         setUser(currentSession.user);
-        setAccessToken(currentSession.access_token); // Set the access token when auth state changes
-        
+        setAccessToken(currentSession.access_token);  // Update access token
+
         if (_event === 'SIGNED_IN') {
           console.log("User signed in, navigating to /");
           navigate("/", { replace: true });
@@ -71,8 +71,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         setSession(null);
         setUser(null);
-        setAccessToken(null); // Reset access token on sign out
-        
+        setAccessToken(null);
+
         if (_event === 'SIGNED_OUT') {
           console.log("User signed out, navigating to login");
           navigate("/login", { replace: true });
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const value = {
     session,
     user,
-    accessToken, // Add accessToken to the context value
+    access_token,  // Providing access token in context
     signOut,
   };
 
