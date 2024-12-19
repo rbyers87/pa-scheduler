@@ -7,18 +7,21 @@ import { useToast } from "@/components/ui/use-toast";
 interface AuthContextType {
   session: Session | null | undefined;
   user: User | null;
+  accessToken: string | null; // Add the accessToken type
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: undefined,
   user: null,
+  accessToken: null, // Initialize accessToken as null
   signOut: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null); // State for accessToken
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -33,15 +36,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (initialSession) {
           setSession(initialSession);
           setUser(initialSession.user);
+          setAccessToken(initialSession.access_token); // Set access token when session is retrieved
         } else {
           setSession(null);
           setUser(null);
+          setAccessToken(null); // Reset access token if no session
           console.log("AuthProvider: No initial session found");
         }
       } catch (error) {
         console.error("Error getting initial session:", error);
         setSession(null);
         setUser(null);
+        setAccessToken(null); // Reset access token on error
       }
     };
 
@@ -56,6 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (currentSession) {
         setSession(currentSession);
         setUser(currentSession.user);
+        setAccessToken(currentSession.access_token); // Set the access token when auth state changes
         
         if (_event === 'SIGNED_IN') {
           console.log("User signed in, navigating to /");
@@ -64,6 +71,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         setSession(null);
         setUser(null);
+        setAccessToken(null); // Reset access token on sign out
         
         if (_event === 'SIGNED_OUT') {
           console.log("User signed out, navigating to login");
@@ -96,6 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const value = {
     session,
     user,
+    accessToken, // Add accessToken to the context value
     signOut,
   };
 
