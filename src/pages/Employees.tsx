@@ -1,87 +1,103 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { EmployeeForm } from "@/components/employees/EmployeeForm";
+import { EditEmployeeDialog } from "@/components/employees/EditEmployeeDialog";
 
 const Employees = () => {
-  const { session, accessToken } = useAuth();
-  const { toast } = useToast();
+  const { session } = useAuth();
+  const navigate = useNavigate();
 
-  const { data: employees, isLoading, error } = useQuery({
+  useEffect(() => {
+    console.log("Employees: Checking session", session);
+    if (!session) {
+      console.log("Employees: No session, redirecting to login");
+      navigate("/login");
+    }
+  }, [session, navigate]);
+
+  const { data: employees, isLoading } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
-      if (!session?.user?.id) {
-        throw new Error("Authentication required");
-      }
-
-      if (!accessToken) {
-        throw new Error("Access token required for API requests");
-      }
-
-      const { data, error: employeesError } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (employeesError) {
-        console.error("Error fetching employees:", employeesError);
-        throw employeesError;
-      }
-
+      if (error) throw error;
       return data;
     },
-    meta: {
-      onError: (error: Error) => {
-        console.error("Query error:", error);
-        toast({
-          title: "Error loading employees",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    },
-    enabled: !!session?.user?.id && !!accessToken,
   });
 
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!employees?.length) {
-    return (
-      <Alert className="my-4">
-        <AlertDescription>No employees found.</AlertDescription>
-      </Alert>
-    );
+  if (!session) {
+    return null;
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold">Employees</h2>
-      <ul>
-        {employees.map((employee) => (
-          <li key={employee.id}>
-            {employee.first_name} {employee.last_name}
-          </li>
-        ))}
-      </ul>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold tracking-tight">Employees</h2>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Employee
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Employee</DialogTitle>
+            </DialogHeader>
+            <EmployeeForm />
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="grid gap-4">
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-6">Loading employees...</CardContent>
+          </Card>
+        ) : employees?.length === 0 ? (
+          <Card>
+            <CardContent className="p-6">No employees found.</CardContent>
+          </Card>
+        ) : (
+          employees?.map((employee) => (
+            <Card key={employee.id}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle>
+                  {employee.first_name} {employee.last_name}
+                </CardTitle>
+                <EditEmployeeDialog employee={employee} />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500">Email: {employee.email}</p>
+                  <p className="text-sm text-gray-500">Role: {employee.role}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 };
