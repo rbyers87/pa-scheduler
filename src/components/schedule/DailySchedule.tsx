@@ -39,7 +39,15 @@ export function DailySchedule({ date }: DailyScheduleProps) {
 
       const { data, error } = await supabase
         .from("schedules")
-        .select("*, employee:profiles!schedules_employee_id_fkey(first_name, last_name)")
+        .select(`
+          id,
+          start_time,
+          end_time,
+          employee:profiles (
+            first_name,
+            last_name
+          )
+        `)
         .gte("start_time", startOfDay.toISOString())
         .lte("end_time", endOfDay.toISOString());
 
