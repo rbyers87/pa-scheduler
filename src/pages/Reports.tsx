@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Reports = () => {
-  const { session } = useAuth();
+  const { session, access_token } = useAuth(); // Destructure to get access_token
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,6 +14,14 @@ const Reports = () => {
       navigate("/login");
     }
   }, [session, navigate]);
+
+  // Example of using the access_token (if needed in future API calls)
+  useEffect(() => {
+    if (access_token) {
+      console.log("Access token available:", access_token);
+      // You can add API calls here that require the access_token
+    }
+  }, [access_token]);
 
   if (!session) {
     return null;
