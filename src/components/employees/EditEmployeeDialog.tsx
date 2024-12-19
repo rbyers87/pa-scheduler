@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Pencil } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Employee = {
   id: string;
@@ -36,6 +37,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
   const [role, setRole] = useState(employee.role);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   const updateEmployee = useMutation({
     mutationFn: async (data: {
@@ -45,6 +47,11 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
       role: "admin" | "supervisor" | "employee";
     }) => {
       console.log("Updating employee:", data);
+      
+      if (!session) {
+        throw new Error("Not authenticated");
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -54,7 +61,11 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         })
         .eq("id", data.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+      
       return data;
     },
     onSuccess: () => {
