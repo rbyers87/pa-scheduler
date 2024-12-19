@@ -10,6 +10,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
 export function ScheduleList() {
   const { toast } = useToast();
@@ -18,43 +20,35 @@ export function ScheduleList() {
   const { data: employees, isLoading, error } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
-      console.log("Fetching employees - Auth state:", { 
-        isAuthenticated: !!session,
-        userId: session?.user?.id,
-        accessToken: session?.access_token?.slice(0, 10) + '...' // Log part of the token for debugging
-      });
-
       if (!session?.user?.id) {
-        console.error("No authenticated user found");
-        throw new Error("You must be logged in to view employees");
+        throw new Error("Authentication required");
       }
 
-      // First verify we can access the authenticated user's own profile
-      const { data: userProfile, error: profileError } = await supabase
+      const { data: currentUserProfile, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
+        .select("role")
         .eq("id", session.user.id)
         .maybeSingle();
 
       if (profileError) {
         console.error("Error fetching user profile:", profileError);
-        throw new Error("Failed to verify user access");
+        throw new Error("Failed to verify user permissions");
       }
 
-      console.log("Successfully fetched user profile:", userProfile);
+      if (!currentUserProfile) {
+        throw new Error("User profile not found");
+      }
 
-      // Now fetch all profiles
-      const { data, error } = await supabase
+      const { data, error: employeesError } = await supabase
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false });
-      
-      if (error) {
-        console.error("Supabase query error:", error);
-        throw error;
+
+      if (employeesError) {
+        console.error("Error fetching employees:", employeesError);
+        throw employeesError;
       }
-      
-      console.log("Successfully fetched employees:", data);
+
       return data;
     },
     meta: {
@@ -67,23 +61,33 @@ export function ScheduleList() {
         });
       }
     },
-    enabled: !!session?.user?.id // Only run query when user is authenticated
+    enabled: !!session?.user?.id
   });
 
   if (error) {
     return (
-      <div className="p-4 text-red-500">
-        Error loading employees: {error.message}
-      </div>
+      <Alert variant="destructive" className="my-4">
+        <AlertDescription>
+          Error loading employees: {error.message}
+        </AlertDescription>
+      </Alert>
     );
   }
 
   if (isLoading) {
-    return <div className="p-4">Loading employees...</div>;
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
   }
 
   if (!employees?.length) {
-    return <div className="p-4">No employees found.</div>;
+    return (
+      <Alert className="my-4">
+        <AlertDescription>No employees found.</AlertDescription>
+      </Alert>
+    );
   }
 
   return (
