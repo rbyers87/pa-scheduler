@@ -17,14 +17,14 @@ export function WeeklySchedule() {
     queryKey: ["schedules", weekStart],
     queryFn: async () => {
       console.log("WeeklySchedule: Fetching schedules for week:", weekStart);
-      
-      if (!session?.user?.id) {
-        console.error("WeeklySchedule: No authenticated user found");
+
+      if (!session?.user?.id || !session?.access_token) {
+        console.error("WeeklySchedule: No authenticated user or access token found");
         throw new Error("You must be logged in to view schedules");
       }
 
       const weekEnd = addDays(weekStart, 7);
-      
+
       // First get regular schedules
       const { data: regularSchedules, error: regularError } = await supabase
         .from("schedules")
@@ -38,7 +38,8 @@ export function WeeklySchedule() {
           )
         `)
         .gte("start_time", weekStart.toISOString())
-        .lt("start_time", weekEnd.toISOString());
+        .lt("start_time", weekEnd.toISOString())
+        .set("Authorization", `Bearer ${session.access_token}`);
 
       if (regularError) {
         console.error("WeeklySchedule: Error fetching regular schedules:", regularError);
@@ -61,7 +62,8 @@ export function WeeklySchedule() {
           )
         `)
         .lte("begin_date", weekEnd.toISOString())
-        .or(`end_date.gt.${weekStart.toISOString()},end_date.is.null`);
+        .or(`end_date.gt.${weekStart.toISOString()},end_date.is.null`)
+        .set("Authorization", `Bearer ${session.access_token}`);
 
       if (recurringError) {
         console.error("WeeklySchedule: Error fetching recurring schedules:", recurringError);
@@ -72,19 +74,18 @@ export function WeeklySchedule() {
       const generatedSchedules = recurringSchedules.flatMap(recurring => {
         const schedules = [];
         let currentDate = new Date(weekStart);
-        
+
         while (currentDate < weekEnd) {
           // Check if the current day is in the recurring schedule's days array
-          // Days are 0-6 where 0 is Sunday
           if (recurring.days.includes(currentDate.getDay())) {
             // Create a new Date object for start and end times
             const startTime = new Date(currentDate);
             const endTime = new Date(currentDate);
-            
+
             // Parse shift times (assuming they're in HH:MM:SS format)
             const [startHours, startMinutes] = recurring.shift.start_time.split(':');
             const [endHours, endMinutes] = recurring.shift.end_time.split(':');
-            
+
             startTime.setHours(parseInt(startHours), parseInt(startMinutes), 0);
             endTime.setHours(parseInt(endHours), parseInt(endMinutes), 0);
 
@@ -115,7 +116,7 @@ export function WeeklySchedule() {
         });
       }
     },
-    enabled: !!session?.user?.id
+    enabled: !!session?.user?.id && !!session?.access_token
   });
 
   const navigateWeek = (direction: "prev" | "next") => {
