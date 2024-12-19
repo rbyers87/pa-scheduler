@@ -26,7 +26,7 @@ export function ScheduleList() {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .order("first_name");
+        .order("created_at", { ascending: false });
       
       if (error) {
         console.error("Error fetching employees:", error);
