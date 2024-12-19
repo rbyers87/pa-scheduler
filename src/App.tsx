@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";  // Assuming AuthContext is where the accessToken is provided
+import { useAuth } from "@/contexts/AuthContext";  // Assuming AuthContext is where the accessToken is provided
 import { useNavigate } from "react-router-dom";
 import HomePage from "@/components/HomePage";  // Example component
 import LoginPage from "@/components/LoginPage";  // Example component
