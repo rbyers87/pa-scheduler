@@ -48,25 +48,38 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
     }) => {
       console.log("Updating employee:", data);
       
-      if (!session) {
-        throw new Error("Not authenticated");
+      if (!session?.user?.id) {
+        console.error("No authenticated user found");
+        throw new Error("You must be logged in to update employees");
       }
 
-      const { error } = await supabase
+      const { data: result, error } = await supabase
         .from("profiles")
         .update({
           first_name: data.first_name,
           last_name: data.last_name,
           role: data.role,
         })
-        .eq("id", data.id);
+        .eq("id", data.id)
+        .select()
+        .single();
 
       if (error) {
         console.error("Supabase error:", error);
         throw error;
       }
       
-      return data;
+      return result;
+    },
+    meta: {
+      onError: (error: Error) => {
+        console.error("Error updating employee:", error);
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
@@ -76,18 +89,19 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
       });
       setOpen(false);
     },
-    onError: (error: any) => {
-      console.error("Error updating employee:", error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!session) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update employees",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     updateEmployee.mutate({
       id: employee.id,
       first_name: firstName,
