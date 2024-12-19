@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { SettingsForm } from "@/components/SettingsForm";
+import { SettingsForm } from "@/components/settings/SettingsForm";
 
 const Settings = () => {
   const { session, accessToken } = useAuth();
