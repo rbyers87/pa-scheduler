@@ -15,23 +15,30 @@ export function RecurringScheduleForm() {
   const [selectedShift, setSelectedShift] = useState<string>();
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>();
-  const [beginDate, setBeginDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [beginDate, setBeginDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState<string>();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
+  // Fetching user profile
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
+
+      // Ensuring the accessToken is used if available
+      const accessToken = session?.access_token || user?.access_token; // fallback if session doesn't provide it
+      if (!accessToken) {
+        throw new Error("Access token not available.");
+      }
+
       const { data, error } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", user.id)
-        .single();
-      
+        .single()
+        .set("Authorization", `Bearer ${accessToken}`);
+
       if (error) throw error;
       return data;
     },
@@ -40,7 +47,8 @@ export function RecurringScheduleForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // Ensure permission check for admin/supervisor roles
     if (!userProfile || !["admin", "supervisor"].includes(userProfile.role)) {
       toast({
         title: "Permission Denied",
@@ -50,6 +58,7 @@ export function RecurringScheduleForm() {
       return;
     }
 
+    // Validation check for required fields
     if (!selectedShift || !selectedEmployee || selectedDays.length === 0 || !beginDate) {
       toast({
         title: "Error",
@@ -68,13 +77,16 @@ export function RecurringScheduleForm() {
         end_date: endDate || null,
       });
 
-      const { error } = await supabase.from("recurring_schedules").insert({
-        employee_id: selectedEmployee,
-        shift_id: selectedShift,
-        days: selectedDays,
-        begin_date: beginDate,
-        end_date: endDate || null,
-      });
+      const { error } = await supabase
+        .from("recurring_schedules")
+        .insert({
+          employee_id: selectedEmployee,
+          shift_id: selectedShift,
+          days: selectedDays,
+          begin_date: beginDate,
+          end_date: endDate || null,
+        })
+        .set("Authorization", `Bearer ${session?.access_token}`); // Include the access token in the request
 
       if (error) throw error;
 
