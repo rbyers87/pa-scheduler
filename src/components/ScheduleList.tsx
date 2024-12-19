@@ -14,15 +14,25 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 
 export function ScheduleList() {
-  const { toast } = useToast();
+  const { toast, accessToken } = useAuth(); // Destructure accessToken from context
   const { session } = useAuth();
-  
+
   const { data: employees, isLoading, error } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
       if (!session?.user?.id) {
         throw new Error("Authentication required");
       }
+
+      // Ensure accessToken is available before making requests
+      if (!accessToken) {
+        throw new Error("Access token required for API requests");
+      }
+
+      // Set the Authorization header with the accessToken
+      const headers = {
+        Authorization: `Bearer ${accessToken}`,
+      };
 
       const { data: currentUserProfile, error: profileError } = await supabase
         .from("profiles")
@@ -42,7 +52,8 @@ export function ScheduleList() {
       const { data, error: employeesError } = await supabase
         .from("profiles")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .headers(headers); // Attach the headers for token-based authentication
 
       if (employeesError) {
         console.error("Error fetching employees:", employeesError);
@@ -61,7 +72,7 @@ export function ScheduleList() {
         });
       }
     },
-    enabled: !!session?.user?.id
+    enabled: !!session?.user?.id && !!accessToken, // Ensure both session and accessToken are available
   });
 
   if (error) {
