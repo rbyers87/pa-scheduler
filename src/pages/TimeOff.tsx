@@ -30,14 +30,15 @@ const TimeOff = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">Time Off Requests</h2>
-      <Card>
-        <CardHeader>
-          <CardTitle>Time Off Management</CardTitle>
-        </CardContent>
-        <CardContent>
-          <p>Time off request features coming soon.</p>
-        </CardContent>
-      </Card>
+<Card>
+  <CardHeader>
+    <CardTitle>Time Off Management</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <p>Time off request features coming soon.</p>
+  </CardContent>
+</Card>
+
     </div>
   );
 };
