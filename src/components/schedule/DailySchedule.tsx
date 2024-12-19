@@ -43,13 +43,13 @@ export function DailySchedule({ date }: DailyScheduleProps) {
   const { data: schedules, refetch, isLoading, error } = useQuery({
     queryKey: ["schedules", date],
     queryFn: async () => {
-      console.log("Fetching schedules - Auth state:", { 
+      console.log("DailySchedule: Fetching schedules - Auth state:", { 
         isAuthenticated: !!session,
         userId: session?.user?.id 
       });
 
       if (!session?.user?.id) {
-        console.error("No authenticated user found");
+        console.error("DailySchedule: No authenticated user found");
         throw new Error("You must be logged in to view schedules");
       }
 
@@ -65,22 +65,25 @@ export function DailySchedule({ date }: DailyScheduleProps) {
           id,
           start_time,
           end_time,
-          employee:profiles(first_name, last_name)
+          employee:profiles(
+            first_name,
+            last_name
+          )
         `)
         .gte("start_time", startOfDay.toISOString())
         .lte("end_time", endOfDay.toISOString());
 
       if (error) {
-        console.error("Supabase query error:", error);
+        console.error("DailySchedule: Supabase query error:", error);
         throw error;
       }
       
-      console.log("Successfully fetched schedules:", data);
+      console.log("DailySchedule: Successfully fetched schedules:", data);
       return data as Schedule[];
     },
     meta: {
       onError: (error: Error) => {
-        console.error("Query error:", error);
+        console.error("DailySchedule: Query error:", error);
         toast({
           title: "Error loading schedules",
           description: error.message,

@@ -5,14 +5,24 @@ import { DaySchedule } from "./DaySchedule";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export function WeeklySchedule() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+  const { session } = useAuth();
+  const { toast } = useToast();
 
   const { data: schedules, refetch } = useQuery({
     queryKey: ["schedules", weekStart],
     queryFn: async () => {
-      console.log("Fetching schedules for week:", weekStart);
+      console.log("WeeklySchedule: Fetching schedules for week:", weekStart);
+      
+      if (!session?.user?.id) {
+        console.error("WeeklySchedule: No authenticated user found");
+        throw new Error("You must be logged in to view schedules");
+      }
+
       const weekEnd = addDays(weekStart, 7);
       
       const { data, error } = await supabase
@@ -21,7 +31,7 @@ export function WeeklySchedule() {
           id,
           start_time,
           end_time,
-          employee:employee_id (
+          employee:profiles(
             first_name,
             last_name
           )
@@ -29,9 +39,25 @@ export function WeeklySchedule() {
         .gte("start_time", weekStart.toISOString())
         .lt("start_time", weekEnd.toISOString());
 
-      if (error) throw error;
+      if (error) {
+        console.error("WeeklySchedule: Error fetching schedules:", error);
+        throw error;
+      }
+
+      console.log("WeeklySchedule: Successfully fetched schedules:", data);
       return data;
     },
+    meta: {
+      onError: (error: Error) => {
+        console.error("WeeklySchedule: Query error:", error);
+        toast({
+          title: "Error loading schedules",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    },
+    enabled: !!session?.user?.id
   });
 
   const navigateWeek = (direction: "prev" | "next") => {
