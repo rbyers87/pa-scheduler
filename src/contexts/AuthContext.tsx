@@ -3,17 +3,17 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Toast } from "@/components/ui/toast";
+import type { ToastProps } from "@/components/ui/toast";
 
 interface AuthContextType {
   session: Session | null | undefined;
   user: User | null;
   accessToken: string | null;
   signOut: () => Promise<void>;
-  toast: (props: typeof Toast) => {
+  toast: (props: ToastProps) => {
     id: string;
     dismiss: () => void;
-    update: (props: typeof Toast) => void;
+    update: (props: ToastProps) => void;
   };
 }
 

@@ -1,5 +1,4 @@
 import { useForm } from "react-hook-form";
-import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -30,9 +29,8 @@ type EmployeeFormData = {
 
 export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
   const form = useForm<EmployeeFormData>();
-  const { toast, accessToken } = useAuth();  // Destructure accessToken from context
+  const { session, accessToken, toast } = useAuth();
   const queryClient = useQueryClient();
-  const { session } = useAuth();
 
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
@@ -43,12 +41,10 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
         throw new Error("You must be logged in to create employees");
       }
 
-      // Ensure accessToken is available before making requests
       if (!accessToken) {
         throw new Error("Access token required for API requests");
       }
 
-      // First verify the current user is an admin
       const { data: currentUserProfile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
@@ -64,11 +60,9 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
         throw new Error("Only admins can create employee profiles");
       }
       
-      // Generate a random password for the initial signup
       const password = Math.random().toString(36).slice(-12);
       
       try {
-        // Create the auth user with metadata including email
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: data.email,
           password: password,
@@ -94,15 +88,6 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
         
         console.log("User created successfully:", authData.user);
         
-        // Set authorization header with access token
-        const headers = {
-          Authorization: `Bearer ${accessToken}`,
-        };
-
-        // You can now use headers for any further API requests
-        // Example: Update the employee's profile or database with the user details
-
-        // Return the temporary password for display
         return { user: authData.user, password };
       } catch (error) {
         console.error("Error in createEmployee:", error);
@@ -112,7 +97,6 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       toast({
-        title: "Success",
         description: `Employee created successfully. Temporary password: ${data.password}`,
       });
       form.reset();
@@ -122,7 +106,6 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       console.error("Error creating employee:", error);
       const errorMessage = error.message || "Failed to create employee. Please try again.";
       toast({
-        title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -132,7 +115,6 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
   const onSubmit = (data: EmployeeFormData) => {
     if (!session) {
       toast({
-        title: "Error",
         description: "You must be logged in to create employees",
         variant: "destructive",
       });
