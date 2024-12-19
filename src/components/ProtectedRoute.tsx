@@ -3,17 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session } = useAuth();
+  const { session, accessToken } = useAuth(); // Destructure accessToken from context
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("ProtectedRoute: Checking session state", { session });
-    
-    if (session === null) {
-      console.log("ProtectedRoute: No session, redirecting to login");
+    console.log("ProtectedRoute: Checking session state", { session, accessToken });
+
+    // If no session or accessToken, redirect to login
+    if (!session || !accessToken) {
+      console.log("ProtectedRoute: No session or accessToken, redirecting to login");
       navigate("/login", { replace: true });
     }
-  }, [session, navigate]);
+  }, [session, accessToken, navigate]);
 
   // Show loading state while session is undefined
   if (session === undefined) {
@@ -25,12 +26,12 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Only render children if we have a valid session
-  if (!session) {
-    console.log("ProtectedRoute: No session, returning null");
+  // If no session or accessToken, return null (do not render children)
+  if (!session || !accessToken) {
+    console.log("ProtectedRoute: No session or accessToken, returning null");
     return null;
   }
 
-  console.log("ProtectedRoute: Valid session, rendering content");
+  console.log("ProtectedRoute: Valid session and accessToken, rendering content");
   return <>{children}</>;
 };
