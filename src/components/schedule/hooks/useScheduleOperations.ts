@@ -16,6 +16,16 @@ export function useScheduleOperations() {
       return;
     }
 
+    // Check if this is a recurring schedule
+    if (scheduleId.includes('-')) {
+      toast({
+        title: "Cannot delete recurring schedule",
+        description: "Recurring schedules must be modified through the recurring schedule form.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("schedules")
@@ -43,6 +53,16 @@ export function useScheduleOperations() {
       toast({
         title: "Error",
         description: "You must be logged in to update schedules",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if this is a recurring schedule
+    if (scheduleId.includes('-')) {
+      toast({
+        title: "Cannot modify recurring schedule",
+        description: "Recurring schedules must be modified through the recurring schedule form.",
         variant: "destructive",
       });
       return;
