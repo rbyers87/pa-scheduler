@@ -20,7 +20,8 @@ export function ScheduleList() {
     queryFn: async () => {
       console.log("Fetching employees - Auth state:", { 
         isAuthenticated: !!session,
-        userId: session?.user?.id 
+        userId: session?.user?.id,
+        accessToken: session?.access_token?.slice(0, 10) + '...' // Log part of the token for debugging
       });
 
       if (!session?.user?.id) {
@@ -28,6 +29,21 @@ export function ScheduleList() {
         throw new Error("You must be logged in to view employees");
       }
 
+      // First verify we can access the authenticated user's own profile
+      const { data: userProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("Error fetching user profile:", profileError);
+        throw new Error("Failed to verify user access");
+      }
+
+      console.log("Successfully fetched user profile:", userProfile);
+
+      // Now fetch all profiles
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
