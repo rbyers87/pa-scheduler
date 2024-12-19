@@ -37,13 +37,17 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
       console.log("Creating employee with data:", data);
-      
+
+      // Ensure user is logged in
       if (!session?.user?.id) {
         console.error("No authenticated user found");
         throw new Error("You must be logged in to create employees");
       }
 
-      // First verify the current user is an admin
+      // Debug session data
+      console.log("Session ID:", session.user.id);
+
+      // Verify the current user's role
       const { data: currentUserProfile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
@@ -58,10 +62,10 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       if (currentUserProfile?.role !== 'admin') {
         throw new Error("Only admins can create employee profiles");
       }
-      
+
       // Generate a random password for the initial signup
       const password = Math.random().toString(36).slice(-12);
-      
+
       try {
         // Create the auth user with metadata including email
         const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -76,19 +80,19 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
             }
           }
         });
-        
+
         if (authError) {
           console.error("Auth error:", authError);
           throw authError;
         }
-        
+
         if (!authData.user) {
           console.error("No user created");
           throw new Error("No user created");
         }
-        
+
         console.log("User created successfully:", authData.user);
-        
+
         // Return the temporary password for display
         return { user: authData.user, password };
       } catch (error) {
@@ -125,7 +129,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       });
       return;
     }
-    
+
     createEmployee.mutate(data);
   };
 
