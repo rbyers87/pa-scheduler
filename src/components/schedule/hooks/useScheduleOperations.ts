@@ -7,7 +7,7 @@ export function useScheduleOperations() {
   const { session } = useAuth();
 
   const handleDeleteSchedule = async (scheduleId: string) => {
-    if (!session?.user?.id || !session?.access_token) {
+    if (!session?.user?.id) {
       toast({
         title: "Error",
         description: "You must be logged in to delete schedules",
@@ -30,8 +30,7 @@ export function useScheduleOperations() {
       const { error } = await supabase
         .from("schedules")
         .delete()
-        .eq("id", scheduleId)
-        .set("Authorization", `Bearer ${session.access_token}`);
+        .eq("id", scheduleId);
 
       if (error) throw error;
 
@@ -50,7 +49,7 @@ export function useScheduleOperations() {
   };
 
   const handleUpdateSchedule = async (scheduleId: string, startTime: Date, endTime: Date) => {
-    if (!session?.user?.id || !session?.access_token) {
+    if (!session?.user?.id) {
       toast({
         title: "Error",
         description: "You must be logged in to update schedules",
@@ -76,8 +75,7 @@ export function useScheduleOperations() {
           start_time: startTime.toISOString(),
           end_time: endTime.toISOString(),
         })
-        .eq("id", scheduleId)
-        .set("Authorization", `Bearer ${session.access_token}`);
+        .eq("id", scheduleId);
 
       if (error) throw error;
 

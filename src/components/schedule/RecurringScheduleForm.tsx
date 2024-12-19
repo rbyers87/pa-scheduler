@@ -26,18 +26,11 @@ export function RecurringScheduleForm() {
     queryFn: async () => {
       if (!user?.id) return null;
 
-      // Ensuring the accessToken is used if available
-      const accessToken = session?.access_token || user?.access_token; // fallback if session doesn't provide it
-      if (!accessToken) {
-        throw new Error("Access token not available.");
-      }
-
       const { data, error } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", user.id)
-        .single()
-        .set("Authorization", `Bearer ${accessToken}`);
+        .single();
 
       if (error) throw error;
       return data;
@@ -85,8 +78,7 @@ export function RecurringScheduleForm() {
           days: selectedDays,
           begin_date: beginDate,
           end_date: endDate || null,
-        })
-        .set("Authorization", `Bearer ${session?.access_token}`); // Include the access token in the request
+        });
 
       if (error) throw error;
 

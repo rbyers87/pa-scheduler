@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   accessToken: string | null;
   signOut: () => Promise<void>;
+  toast: ReturnType<typeof useToast>["toast"];
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   accessToken: null,
   signOut: async () => {},
+  toast: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -103,6 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     user,
     accessToken,
     signOut,
+    toast,
   };
 
   return (

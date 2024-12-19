@@ -18,8 +18,8 @@ export function WeeklySchedule() {
     queryFn: async () => {
       console.log("WeeklySchedule: Fetching schedules for week:", weekStart);
 
-      if (!session?.user?.id || !session?.access_token) {
-        console.error("WeeklySchedule: No authenticated user or access token found");
+      if (!session?.user?.id) {
+        console.error("WeeklySchedule: No authenticated user found");
         throw new Error("You must be logged in to view schedules");
       }
 
@@ -38,8 +38,7 @@ export function WeeklySchedule() {
           )
         `)
         .gte("start_time", weekStart.toISOString())
-        .lt("start_time", weekEnd.toISOString())
-        .set("Authorization", `Bearer ${session.access_token}`);
+        .lt("start_time", weekEnd.toISOString());
 
       if (regularError) {
         console.error("WeeklySchedule: Error fetching regular schedules:", regularError);
@@ -62,8 +61,7 @@ export function WeeklySchedule() {
           )
         `)
         .lte("begin_date", weekEnd.toISOString())
-        .or(`end_date.gt.${weekStart.toISOString()},end_date.is.null`)
-        .set("Authorization", `Bearer ${session.access_token}`);
+        .or(`end_date.gt.${weekStart.toISOString()},end_date.is.null`);
 
       if (recurringError) {
         console.error("WeeklySchedule: Error fetching recurring schedules:", recurringError);
@@ -76,13 +74,10 @@ export function WeeklySchedule() {
         let currentDate = new Date(weekStart);
 
         while (currentDate < weekEnd) {
-          // Check if the current day is in the recurring schedule's days array
           if (recurring.days.includes(currentDate.getDay())) {
-            // Create a new Date object for start and end times
             const startTime = new Date(currentDate);
             const endTime = new Date(currentDate);
 
-            // Parse shift times (assuming they're in HH:MM:SS format)
             const [startHours, startMinutes] = recurring.shift.start_time.split(':');
             const [endHours, endMinutes] = recurring.shift.end_time.split(':');
 
@@ -116,7 +111,7 @@ export function WeeklySchedule() {
         });
       }
     },
-    enabled: !!session?.user?.id && !!session?.access_token
+    enabled: !!session?.user?.id
   });
 
   const navigateWeek = (direction: "prev" | "next") => {
