@@ -1,54 +1,75 @@
-import React, { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";  // Assuming AuthContext is where the accessToken is provided
-import { useNavigate } from "react-router-dom";
-import HomePage from "@/components/HomePage";  // Example component
-import LoginPage from "@/components/LoginPage";  // Example component
-import ProtectedPage from "@/components/ProtectedPage";  // Example component
-import { supabase } from "@/integrations/supabase/client"; // Import Supabase client
-import { useToast } from "@/components/ui/use-toast"; // Assuming you use toast notifications
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Routes, Route } from "react-router-dom";
+import { Layout } from "./components/Layout";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
-const App = () => {
-  const { session, accessToken, user } = useAuth();  // Access session and accessToken from context
-  const navigate = useNavigate();
-  const { toast } = useToast();
+// Pages
+import Schedule from "./pages/Schedule";
+import TimeOff from "./pages/TimeOff";
+import Employees from "./pages/Employees";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import Login from "./pages/Login";
+import Index from "./pages/Index";
 
-  useEffect(() => {
-    // Handle accessToken or session updates if needed
-    if (accessToken) {
-      console.log("Access token is available:", accessToken);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 1,
+    },
+  },
+});
 
-      // Optionally, set the Supabase session using the accessToken (if not already set)
-      supabase.auth.setAuth(accessToken);  // Sets the token to Supabase client if needed
-    }
-  }, [accessToken]);
-
-  useEffect(() => {
-    if (session && user) {
-      // User is authenticated, you can handle logic like redirecting to home or protected pages
-      console.log("User is authenticated:", user);
-    } else {
-      // User is not authenticated, redirect to login
-      console.log("User is not authenticated, redirecting to login...");
-      navigate("/login", { replace: true });
-    }
-  }, [session, user, navigate]);
-
+function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route
-          path="/login"
-          element={session ? <HomePage /> : <LoginPage />}
-        />
-        <Route
-          path="/protected"
-          element={session ? <ProtectedPage /> : <LoginPage />}
-        />
-      </Routes>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <LayoutWithAccessToken />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<IndexWithAccessToken />} />
+              <Route path="schedule" element={<ScheduleWithAccessToken />} />
+              <Route path="time-off" element={<TimeOffWithAccessToken />} />
+              <Route path="employees" element={<EmployeesWithAccessToken />} />
+              <Route path="reports" element={<ReportsWithAccessToken />} />
+              <Route path="settings" element={<SettingsWithAccessToken />} />
+            </Route>
+          </Routes>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
-};
+}
+
+function withAccessToken(Component: React.ComponentType<{ accessToken: string }>) {
+  return function WrappedComponent() {
+    const { session } = useAuth();
+    const accessToken = session?.access_token || "";
+
+    return <Component accessToken={accessToken} />;
+  };
+}
+
+const LayoutWithAccessToken = withAccessToken(Layout);
+const IndexWithAccessToken = withAccessToken(Index);
+const ScheduleWithAccessToken = withAccessToken(Schedule);
+const TimeOffWithAccessToken = withAccessToken(TimeOff);
+const EmployeesWithAccessToken = withAccessToken(Employees);
+const ReportsWithAccessToken = withAccessToken(Reports);
+const SettingsWithAccessToken = withAccessToken(Settings);
 
 export default App;
