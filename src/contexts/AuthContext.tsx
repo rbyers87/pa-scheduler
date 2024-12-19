@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   session: Session | null | undefined;
@@ -28,7 +28,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log("AuthProvider: Setting up auth subscriptions");
 
-    // Get initial session
     const initializeAuth = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
@@ -41,7 +40,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(null);
           setUser(null);
           setAccessToken(null);
-          console.log("AuthProvider: No initial session found");
         }
       } catch (error) {
         console.error("Error getting initial session:", error);
@@ -53,37 +51,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     initializeAuth();
 
-    // Set up auth state change subscription
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, currentSession) => {
         console.log("Auth state changed:", _event, currentSession);
-
+        
         if (currentSession) {
           setSession(currentSession);
           setUser(currentSession.user);
           setAccessToken(currentSession.access_token);
-
+          
           if (_event === 'SIGNED_IN') {
             console.log("User signed in, navigating to /");
-            navigate("/", { replace: true });
+            navigate("/");
           }
         } else {
           setSession(null);
           setUser(null);
           setAccessToken(null);
-
+          
           if (_event === 'SIGNED_OUT') {
             console.log("User signed out, navigating to login");
-            navigate("/login", { replace: true });
+            navigate("/login");
           }
         }
       }
     );
 
-    // Cleanup subscription on unmount
     return () => {
-      console.log("AuthProvider: Cleaning up auth listener");
-      authListener.subscription.unsubscribe();
+      console.log("AuthProvider: Cleaning up auth subscription");
+      subscription.unsubscribe();
     };
   }, [navigate]);
 

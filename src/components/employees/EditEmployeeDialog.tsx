@@ -35,9 +35,9 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
   const [firstName, setFirstName] = useState(employee.first_name || "");
   const [lastName, setLastName] = useState(employee.last_name || "");
   const [role, setRole] = useState(employee.role);
-  const { toast, accessToken } = useAuth();  // Destructure accessToken from context
+  const { toast } = useToast();
+  const { session, accessToken } = useAuth();
   const queryClient = useQueryClient();
-  const { session } = useAuth();
 
   const updateEmployee = useMutation({
     mutationFn: async (data: {
@@ -53,12 +53,10 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw new Error("You must be logged in to update employees");
       }
 
-      // Ensure accessToken is available before making requests
       if (!accessToken) {
         throw new Error("Access token required for API requests");
       }
 
-      // First verify the current user is an admin
       const { data: currentUserProfile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
@@ -74,12 +72,6 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw new Error("Only admins can update employee profiles");
       }
 
-      // Set authorization header with access token
-      const headers = {
-        Authorization: `Bearer ${accessToken}`,
-      };
-
-      // Update the profile
       const { data: updatedProfile, error: updateError } = await supabase
         .from("profiles")
         .update({
@@ -89,7 +81,6 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", data.id)
-        .headers(headers)  // Include the headers for token authentication
         .select()
         .single();
 
