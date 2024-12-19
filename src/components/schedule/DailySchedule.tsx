@@ -2,8 +2,6 @@ import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { TimeBlock } from "./types/TimeBlock";
@@ -22,12 +20,6 @@ export function DailySchedule({ date }: DailyScheduleProps) {
   const { data: schedules, refetch, isLoading, error } = useQuery({
     queryKey: ["schedules", date],
     queryFn: async () => {
-      console.log("DailySchedule: Fetching schedules - Auth state:", { 
-        isAuthenticated: !!session,
-        userId: session?.user?.id,
-        accessToken: session?.access_token?.slice(0, 10) + '...' // Log part of the token for debugging
-      });
-
       if (!session?.user?.id) {
         console.error("DailySchedule: No authenticated user found");
         throw new Error("You must be logged in to view schedules");
@@ -39,22 +31,15 @@ export function DailySchedule({ date }: DailyScheduleProps) {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      console.log("DailySchedule: Querying with date range:", {
+      console.log("DailySchedule: Querying schedules with params:", {
         startOfDay: startOfDay.toISOString(),
-        endOfDay: endOfDay.toISOString()
+        endOfDay: endOfDay.toISOString(),
+        userId: session.user.id
       });
 
       const { data, error } = await supabase
         .from("schedules")
-        .select(`
-          id,
-          start_time,
-          end_time,
-          employee:profiles(
-            first_name,
-            last_name
-          )
-        `)
+        .select("*, employee:profiles!schedules_employee_id_fkey(first_name, last_name)")
         .gte("start_time", startOfDay.toISOString())
         .lte("end_time", endOfDay.toISOString());
 
