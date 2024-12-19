@@ -34,7 +34,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState(employee.first_name || "");
   const [lastName, setLastName] = useState(employee.last_name || "");
-  const [role, setRole] = useState(employee.role);
+  const [role, setRole] = useState<"admin" | "supervisor" | "employee">(employee.role);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { session } = useAuth();
