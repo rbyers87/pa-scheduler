@@ -15,7 +15,7 @@ interface DailyScheduleProps {
 export function DailySchedule({ date }: DailyScheduleProps) {
   const { toast } = useToast();
   const { session } = useAuth();
-  const { handleDeleteSchedule } = useScheduleOperations();
+  const { handleDeleteSchedule, handleUpdateSchedule } = useScheduleOperations();
   
   const { data: schedules, refetch, isLoading, error } = useQuery({
     queryKey: ["schedules", date],
@@ -108,6 +108,32 @@ export function DailySchedule({ date }: DailyScheduleProps) {
     enabled: !!session?.user?.id
   });
 
+  const handleScheduleResize = async (scheduleId: string, startBlock: number, endBlock: number) => {
+    // Convert block indices to times
+    const startTime = new Date(date);
+    const endTime = new Date(date);
+    
+    const startHours = Math.floor(startBlock / 4);
+    const startMinutes = (startBlock % 4) * 15;
+    const endHours = Math.floor(endBlock / 4);
+    const endMinutes = (endBlock % 4) * 15;
+    
+    startTime.setHours(startHours, startMinutes, 0, 0);
+    endTime.setHours(endHours, endMinutes, 0, 0);
+
+    // Only update non-recurring schedules
+    if (!scheduleId.includes('-')) {
+      await handleUpdateSchedule(scheduleId, startTime, endTime);
+      refetch();
+    } else {
+      toast({
+        title: "Cannot modify recurring schedule",
+        description: "Recurring schedules must be modified through the recurring schedule form.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (error) {
     return (
       <div className="p-4 text-red-500">
@@ -158,6 +184,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
         timeBlocks={timeBlocks}
         onDelete={handleDeleteSchedule}
         onScheduleUpdate={refetch}
+        onScheduleResize={handleScheduleResize}
       />
     </Card>
   );

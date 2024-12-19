@@ -38,7 +38,43 @@ export function useScheduleOperations() {
     }
   };
 
+  const handleUpdateSchedule = async (scheduleId: string, startTime: Date, endTime: Date) => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update schedules",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("schedules")
+        .update({
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+        })
+        .eq("id", scheduleId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Schedule updated",
+        description: "The schedule has been updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error updating schedule:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update schedule. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
-    handleDeleteSchedule
+    handleDeleteSchedule,
+    handleUpdateSchedule
   };
 }
