@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,20 @@ const Login = () => {
   const [resetEmail, setResetEmail] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Session monitoring and login state
+  useEffect(() => {
+    const { data: session } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        console.log("Session changed: ", session);
+      }
+    });
+
+    return () => {
+      // Clean up listener on component unmount
+      session?.unsubscribe();
+    };
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,11 +73,23 @@ const Login = () => {
         return;
       }
 
-      console.log("Login: Success, navigating to /");
-      navigate("/");
-      toast({
-        title: "Logged in successfully",
-      });
+      // After successful login, get the session
+      const { data: session } = await supabase.auth.getSession();
+      if (session) {
+        console.log("User session:", session);
+        // Session is available, user is authenticated
+        navigate("/");  // Navigate to the dashboard or home page
+        toast({
+          title: "Logged in successfully",
+        });
+      } else {
+        // If session is null, it means something went wrong
+        toast({
+          title: "Login failed",
+          description: "Session expired or invalid login.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
       console.error("Login: Unexpected error:", error);
       toast({
