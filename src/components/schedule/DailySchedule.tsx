@@ -31,19 +31,14 @@ export function DailySchedule({ date }: DailyScheduleProps) {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      console.log("DailySchedule: Querying schedules with params:", {
-        startOfDay: startOfDay.toISOString(),
-        endOfDay: endOfDay.toISOString(),
-        userId: session.user.id
-      });
-
-      const { data, error } = await supabase
+      // Get regular schedules
+      const { data: regularSchedules, error: regularError } = await supabase
         .from("schedules")
         .select(`
           id,
           start_time,
           end_time,
-          employee:profiles (
+          employee:profiles(
             first_name,
             last_name
           )
@@ -51,13 +46,54 @@ export function DailySchedule({ date }: DailyScheduleProps) {
         .gte("start_time", startOfDay.toISOString())
         .lte("end_time", endOfDay.toISOString());
 
-      if (error) {
-        console.error("DailySchedule: Supabase query error:", error);
-        throw error;
-      }
-      
-      console.log("DailySchedule: Successfully fetched schedules:", data);
-      return data;
+      if (regularError) throw regularError;
+
+      // Get recurring schedules
+      const { data: recurringSchedules, error: recurringError } = await supabase
+        .from("recurring_schedules")
+        .select(`
+          id,
+          days,
+          employee:profiles(
+            first_name,
+            last_name
+          ),
+          shift:shifts(
+            start_time,
+            end_time
+          )
+        `)
+        .lte("begin_date", endOfDay.toISOString())
+        .or(`end_date.gt.${startOfDay.toISOString()},end_date.is.null`);
+
+      if (recurringError) throw recurringError;
+
+      // Convert recurring schedules for this day
+      const dayOfWeek = date.getDay();
+      const generatedSchedules = recurringSchedules
+        .filter(recurring => recurring.days.includes(dayOfWeek))
+        .map(recurring => {
+          const startTime = new Date(date);
+          const endTime = new Date(date);
+          
+          const [startHours, startMinutes] = recurring.shift.start_time.split(':');
+          const [endHours, endMinutes] = recurring.shift.end_time.split(':');
+          
+          startTime.setHours(parseInt(startHours), parseInt(startMinutes), 0);
+          endTime.setHours(parseInt(endHours), parseInt(endMinutes), 0);
+
+          return {
+            id: `${recurring.id}-${date.toISOString()}`,
+            start_time: startTime.toISOString(),
+            end_time: endTime.toISOString(),
+            employee: recurring.employee,
+            isRecurring: true
+          };
+        });
+
+      const allSchedules = [...regularSchedules, ...generatedSchedules];
+      console.log("DailySchedule: Successfully fetched all schedules:", allSchedules);
+      return allSchedules;
     },
     meta: {
       onError: (error: Error) => {
