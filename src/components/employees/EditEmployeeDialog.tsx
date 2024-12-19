@@ -53,12 +53,30 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw new Error("You must be logged in to update employees");
       }
 
+      // First verify the current user is an admin
+      const { data: currentUserProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("Error fetching user profile:", profileError);
+        throw new Error("Failed to verify user permissions");
+      }
+
+      if (currentUserProfile?.role !== 'admin') {
+        throw new Error("Only admins can update employee profiles");
+      }
+
+      // Update the profile
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
           first_name: data.first_name,
           last_name: data.last_name,
           role: data.role,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", data.id);
 
@@ -67,7 +85,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw updateError;
       }
 
-      // Fetch the updated employee data
+      // Fetch and return the updated employee data
       const { data: updatedEmployee, error: fetchError } = await supabase
         .from("profiles")
         .select("*")
