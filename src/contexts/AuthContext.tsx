@@ -3,13 +3,18 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { ToasterToast, Toast } from "@/components/ui/toast";
 
 interface AuthContextType {
   session: Session | null | undefined;
   user: User | null;
   accessToken: string | null;
   signOut: () => Promise<void>;
-  toast: ReturnType<typeof useToast>["toast"];
+  toast: (props: Toast) => {
+    id: string;
+    dismiss: () => void;
+    update: (props: ToasterToast) => void;
+  };
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -17,7 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   accessToken: null,
   signOut: async () => {},
-  toast: () => {},
+  toast: () => ({ id: "", dismiss: () => {}, update: () => {} }),
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
