@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 type EmployeeFormData = {
   email: string;
@@ -31,10 +32,32 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
   const form = useForm<EmployeeFormData>();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
       console.log("Creating employee with data:", data);
+      
+      if (!session?.user?.id) {
+        console.error("No authenticated user found");
+        throw new Error("You must be logged in to create employees");
+      }
+
+      // First verify the current user is an admin
+      const { data: currentUserProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("Error fetching user profile:", profileError);
+        throw new Error("Failed to verify user permissions");
+      }
+
+      if (currentUserProfile?.role !== 'admin') {
+        throw new Error("Only admins can create employee profiles");
+      }
       
       // Generate a random password for the initial signup
       const password = Math.random().toString(36).slice(-12);
@@ -46,7 +69,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
           password: password,
           options: {
             data: {
-              email: data.email, // Include email in metadata
+              email: data.email,
               first_name: data.first_name,
               last_name: data.last_name,
               role: data.role
@@ -94,6 +117,15 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
   });
 
   const onSubmit = (data: EmployeeFormData) => {
+    if (!session) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create employees",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     createEmployee.mutate(data);
   };
 
