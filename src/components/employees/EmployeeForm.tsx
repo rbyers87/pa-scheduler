@@ -30,24 +30,25 @@ type EmployeeFormData = {
 
 export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
   const form = useForm<EmployeeFormData>();
-  const { toast } = useToast();
+  const { toast, accessToken } = useAuth();  // Destructure accessToken from context
   const queryClient = useQueryClient();
   const { session } = useAuth();
 
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
       console.log("Creating employee with data:", data);
-
-      // Ensure user is logged in
+      
       if (!session?.user?.id) {
         console.error("No authenticated user found");
         throw new Error("You must be logged in to create employees");
       }
 
-      // Debug session data
-      console.log("Session ID:", session.user.id);
+      // Ensure accessToken is available before making requests
+      if (!accessToken) {
+        throw new Error("Access token required for API requests");
+      }
 
-      // Verify the current user's role
+      // First verify the current user is an admin
       const { data: currentUserProfile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
@@ -62,10 +63,10 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       if (currentUserProfile?.role !== 'admin') {
         throw new Error("Only admins can create employee profiles");
       }
-
+      
       // Generate a random password for the initial signup
       const password = Math.random().toString(36).slice(-12);
-
+      
       try {
         // Create the auth user with metadata including email
         const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -80,18 +81,26 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
             }
           }
         });
-
+        
         if (authError) {
           console.error("Auth error:", authError);
           throw authError;
         }
-
+        
         if (!authData.user) {
           console.error("No user created");
           throw new Error("No user created");
         }
-
+        
         console.log("User created successfully:", authData.user);
+        
+        // Set authorization header with access token
+        const headers = {
+          Authorization: `Bearer ${accessToken}`,
+        };
+
+        // You can now use headers for any further API requests
+        // Example: Update the employee's profile or database with the user details
 
         // Return the temporary password for display
         return { user: authData.user, password };
@@ -129,7 +138,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       });
       return;
     }
-
+    
     createEmployee.mutate(data);
   };
 
