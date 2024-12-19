@@ -1,52 +1,54 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route } from "react-router-dom";
-import { Layout } from "./components/Layout";
-import { AuthProvider } from "./contexts/AuthContext";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import React, { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";  // Assuming AuthContext is where the accessToken is provided
+import { useNavigate } from "react-router-dom";
+import HomePage from "@/components/HomePage";  // Example component
+import LoginPage from "@/components/LoginPage";  // Example component
+import ProtectedPage from "@/components/ProtectedPage";  // Example component
+import { supabase } from "@/integrations/supabase/client"; // Import Supabase client
+import { useToast } from "@/components/ui/use-toast"; // Assuming you use toast notifications
 
-// Pages
-import Schedule from "./pages/Schedule";
-import TimeOff from "./pages/TimeOff";
-import Employees from "./pages/Employees";
-import Reports from "./pages/Reports";
-import Settings from "./pages/Settings";
-import Login from "./pages/Login";
-import Index from "./pages/Index";
+const App = () => {
+  const { session, accessToken, user } = useAuth();  // Access session and accessToken from context
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      retry: 1,
-    },
-  },
-});
+  useEffect(() => {
+    // Handle accessToken or session updates if needed
+    if (accessToken) {
+      console.log("Access token is available:", accessToken);
 
-function App() {
+      // Optionally, set the Supabase session using the accessToken (if not already set)
+      supabase.auth.setAuth(accessToken);  // Sets the token to Supabase client if needed
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (session && user) {
+      // User is authenticated, you can handle logic like redirecting to home or protected pages
+      console.log("User is authenticated:", user);
+    } else {
+      // User is not authenticated, redirect to login
+      console.log("User is not authenticated, redirecting to login...");
+      navigate("/login", { replace: true });
+    }
+  }, [session, user, navigate]);
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-              <Route index element={<Index />} />
-              <Route path="schedule" element={<Schedule />} />
-              <Route path="time-off" element={<TimeOff />} />
-              <Route path="employees" element={<Employees />} />
-              <Route path="reports" element={<Reports />} />
-              <Route path="settings" element={<Settings />} />
-            </Route>
-          </Routes>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route
+          path="/login"
+          element={session ? <HomePage /> : <LoginPage />}
+        />
+        <Route
+          path="/protected"
+          element={session ? <ProtectedPage /> : <LoginPage />}
+        />
+      </Routes>
+    </Router>
   );
-}
+};
 
 export default App;
