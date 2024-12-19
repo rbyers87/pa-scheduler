@@ -53,7 +53,8 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw new Error("You must be logged in to update employees");
       }
 
-      const { error } = await supabase
+      // First update the profile
+      const { error: updateError } = await supabase
         .from("profiles")
         .update({
           first_name: data.first_name,
@@ -62,12 +63,12 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         })
         .eq("id", data.id);
 
-      if (error) {
-        console.error("Supabase error:", error);
-        throw error;
+      if (updateError) {
+        console.error("Error updating profile:", updateError);
+        throw updateError;
       }
 
-      // Fetch the updated record
+      // Then fetch the updated profile
       const { data: updatedProfile, error: fetchError } = await supabase
         .from("profiles")
         .select("*")
@@ -79,17 +80,8 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw fetchError;
       }
 
+      console.log("Successfully updated profile:", updatedProfile);
       return updatedProfile;
-    },
-    meta: {
-      onError: (error: Error) => {
-        console.error("Error updating employee:", error);
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
@@ -98,6 +90,14 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         description: "Employee updated successfully",
       });
       setOpen(false);
+    },
+    onError: (error: Error) => {
+      console.error("Error updating employee:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
