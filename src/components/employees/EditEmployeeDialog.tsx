@@ -35,7 +35,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
   const [firstName, setFirstName] = useState(employee.first_name || "");
   const [lastName, setLastName] = useState(employee.last_name || "");
   const [role, setRole] = useState(employee.role);
-  const { toast } = useToast();
+  const { toast, accessToken } = useAuth();  // Destructure accessToken from context
   const queryClient = useQueryClient();
   const { session } = useAuth();
 
@@ -48,16 +48,17 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
     }) => {
       console.log("Updating employee:", data);
 
-      // Ensure session is valid
       if (!session?.user?.id) {
         console.error("No authenticated user found");
         throw new Error("You must be logged in to update employees");
       }
 
-      // Debug session data
-      console.log("Session ID:", session.user.id);
+      // Ensure accessToken is available before making requests
+      if (!accessToken) {
+        throw new Error("Access token required for API requests");
+      }
 
-      // Verify the current user's role
+      // First verify the current user is an admin
       const { data: currentUserProfile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
@@ -69,10 +70,14 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw new Error("Failed to verify user permissions");
       }
 
-      // Ensure user is an admin
       if (currentUserProfile?.role !== 'admin') {
         throw new Error("Only admins can update employee profiles");
       }
+
+      // Set authorization header with access token
+      const headers = {
+        Authorization: `Bearer ${accessToken}`,
+      };
 
       // Update the profile
       const { data: updatedProfile, error: updateError } = await supabase
@@ -84,6 +89,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", data.id)
+        .headers(headers)  // Include the headers for token authentication
         .select()
         .single();
 
