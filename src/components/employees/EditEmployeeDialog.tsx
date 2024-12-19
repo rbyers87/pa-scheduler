@@ -53,7 +53,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw new Error("You must be logged in to update employees");
       }
 
-      const { data: updatedProfile, error } = await supabase
+      const { data: updatedEmployee, error } = await supabase
         .from("profiles")
         .update({
           first_name: data.first_name,
@@ -61,16 +61,20 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
           role: data.role,
         })
         .eq("id", data.id)
-        .select()
-        .single();
+        .select("*")
+        .maybeSingle();
 
       if (error) {
         console.error("Error updating profile:", error);
         throw error;
       }
 
-      console.log("Successfully updated profile:", updatedProfile);
-      return updatedProfile;
+      if (!updatedEmployee) {
+        throw new Error("Failed to update employee");
+      }
+
+      console.log("Successfully updated employee:", updatedEmployee);
+      return updatedEmployee;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
