@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
-  const { session } = useAuth();
+  const { session, access_token } = useAuth();  // Get access_token from AuthContext
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -46,6 +46,14 @@ const Index = () => {
   if (!session) {
     return null;
   }
+
+  // Example of using the access_token (if needed in future API calls)
+  useEffect(() => {
+    if (access_token) {
+      console.log("Access token available:", access_token);
+      // Add any API call here that requires the access_token
+    }
+  }, [access_token]);
 
   return (
     <div className="space-y-6">
