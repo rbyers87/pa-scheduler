@@ -22,7 +22,7 @@ import { EmployeeForm } from "@/components/employees/EmployeeForm";
 import { EditEmployeeDialog } from "@/components/employees/EditEmployeeDialog";
 
 const Employees = () => {
-  const { session } = useAuth();
+  const { session, access_token } = useAuth();  // Get access token from AuthContext
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,10 +36,15 @@ const Employees = () => {
   const { data: employees, isLoading } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
+      if (!access_token) {
+        throw new Error("No access token found. Please log in.");
+      }
+
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .eq('access_token', access_token); // Include access token to ensure proper authorization
 
       if (error) throw error;
       return data;
