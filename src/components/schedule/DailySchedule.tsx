@@ -95,6 +95,15 @@ export function DailySchedule({ date }: DailyScheduleProps) {
   });
 
   const handleDeleteSchedule = async (scheduleId: string) => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to delete schedules",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("schedules")
