@@ -58,7 +58,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         .from("profiles")
         .select("role")
         .eq("id", session.user.id)
-        .maybeSingle();
+        .single();
 
       if (profileError) {
         console.error("Error fetching user profile:", profileError);
@@ -70,7 +70,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
       }
 
       // Update the profile
-      const { error: updateError } = await supabase
+      const { data: updatedProfile, error: updateError } = await supabase
         .from("profiles")
         .update({
           first_name: data.first_name,
@@ -78,31 +78,21 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
           role: data.role,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", data.id);
+        .eq("id", data.id)
+        .select()
+        .single();
 
       if (updateError) {
         console.error("Error updating profile:", updateError);
         throw updateError;
       }
 
-      // Fetch and return the updated employee data
-      const { data: updatedEmployee, error: fetchError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", data.id)
-        .maybeSingle();
-
-      if (fetchError) {
-        console.error("Error fetching updated profile:", fetchError);
-        throw fetchError;
+      if (!updatedProfile) {
+        throw new Error("Failed to update employee profile");
       }
 
-      if (!updatedEmployee) {
-        throw new Error("Failed to fetch updated employee");
-      }
-
-      console.log("Successfully updated employee:", updatedEmployee);
-      return updatedEmployee;
+      console.log("Successfully updated employee:", updatedProfile);
+      return updatedProfile;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
