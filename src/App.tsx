@@ -19,7 +19,7 @@ import Index from "./pages/Index";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,
+      staleTime: 5 * 60 * 1000, // 5 minutes
       retry: 1,
     },
   },
@@ -37,7 +37,7 @@ function App() {
             <Route
               element={
                 <ProtectedRoute>
-                  <LayoutWithAccessToken />
+                  <Layout />
                 </ProtectedRoute>
               }
             >
@@ -60,11 +60,15 @@ function withAccessToken(Component: React.ComponentType<{ accessToken: string }>
     const { session } = useAuth();
     const accessToken = session?.access_token || "";
 
+    if (!accessToken) {
+      console.warn("withAccessToken: No access token available.");
+    }
+
     return <Component accessToken={accessToken} />;
   };
 }
 
-const LayoutWithAccessToken = withAccessToken(Layout);
+// Wrapping components to pass accessToken
 const IndexWithAccessToken = withAccessToken(Index);
 const ScheduleWithAccessToken = withAccessToken(Schedule);
 const TimeOffWithAccessToken = withAccessToken(TimeOff);
