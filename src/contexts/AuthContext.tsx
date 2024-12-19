@@ -7,21 +7,21 @@ import { useToast } from "@/components/ui/use-toast";
 interface AuthContextType {
   session: Session | null | undefined;
   user: User | null;
-  access_token: string | null;
+  accessToken: string | null;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: undefined,
   user: null,
-  access_token: null,
+  accessToken: null,
   signOut: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [user, setUser] = useState<User | null>(null);
-  const [access_token, setAccessToken] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initializeAuth();
 
     // Set up auth state change subscription
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, currentSession) => {
         console.log("Auth state changed:", _event, currentSession);
 
@@ -82,8 +82,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Cleanup subscription on unmount
     return () => {
-      console.log("AuthProvider: Cleaning up subscriptions");
-      subscription.unsubscribe();
+      console.log("AuthProvider: Cleaning up auth listener");
+      authListener.subscription.unsubscribe();
     };
   }, [navigate]);
 
@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const value = {
     session,
     user,
-    access_token,
+    accessToken,
     signOut,
   };
 

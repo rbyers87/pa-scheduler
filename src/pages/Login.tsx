@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,127 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { ResetPasswordDialog } from "@/components/auth/ResetPasswordDialog";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Session monitoring and login state
-  useEffect(() => {
-    const { data: session } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        console.log("Session changed: ", session);
-      }
-    });
-
-    return () => {
-      // Clean up listener on component unmount
-      session?.unsubscribe();
-    };
-  }, []);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    console.log("Login: Attempting login with email:", email);
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error("Login: Error during login:", error);
-        
-        // Handle email not confirmed error specifically
-        if (error.message.includes("Email not confirmed")) {
-          toast({
-            title: "Email not confirmed",
-            description: "Please check your email for the confirmation link. For development, you can disable email confirmation in the Supabase dashboard.",
-            variant: "destructive",
-          });
-        } else if (error.message === "Invalid login credentials") {
-          toast({
-            title: "Login failed",
-            description: "Invalid email or password. Please try again.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Error logging in",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
-        return;
-      }
-
-      // After successful login, get the session
-      const { data: session } = await supabase.auth.getSession();
-      if (session) {
-        console.log("User session:", session);
-        // Session is available, user is authenticated
-        navigate("/");  // Navigate to the dashboard or home page
-        toast({
-          title: "Logged in successfully",
-        });
-      } else {
-        // If session is null, it means something went wrong
-        toast({
-          title: "Login failed",
-          description: "Session expired or invalid login.",
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      console.error("Login: Unexpected error:", error);
-      toast({
-        title: "Error logging in",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/settings`,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Password reset email sent",
-        description: "Please check your email for the reset link",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error sending reset email",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -137,76 +23,10 @@ const Login = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading}
-              >
-                {loading ? "Loading..." : "Login"}
-              </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="w-full"
-                    disabled={loading}
-                  >
-                    Forgot Password?
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Reset Password</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handlePasswordReset} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="resetEmail">Email</Label>
-                      <Input
-                        id="resetEmail"
-                        type="email"
-                        placeholder="Enter your email"
-                        value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={loading}
-                    >
-                      Send Reset Link
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </form>
+          <LoginForm />
+          <div className="mt-4">
+            <ResetPasswordDialog />
+          </div>
         </CardContent>
       </Card>
     </div>

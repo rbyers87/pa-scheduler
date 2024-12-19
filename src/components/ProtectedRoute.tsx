@@ -14,12 +14,11 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       console.log("ProtectedRoute: No session or accessToken, redirecting to login");
       navigate("/login", {
         replace: true,
-        state: { from: location.pathname }, // Save intended path for redirection after login
+        state: { from: location.pathname },
       });
     }
   }, [session, accessToken, navigate, location]);
 
-  // Show loading state while session or accessToken is being determined
   if (session === undefined || accessToken === undefined) {
     console.log("ProtectedRoute: Session or accessToken loading");
     return (
@@ -29,7 +28,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // If session or accessToken is invalid, return null (navigation will handle redirect)
   if (!session || !accessToken) {
     console.log("ProtectedRoute: No valid session or accessToken, returning null");
     return null;
