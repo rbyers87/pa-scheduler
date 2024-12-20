@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -21,13 +21,10 @@ import { Plus } from "lucide-react";
 import { EmployeeForm } from "@/components/employees/EmployeeForm";
 import { EditEmployeeDialog } from "@/components/employees/EditEmployeeDialog";
 
-// Employee list page component
 const Employees = () => {
-  const { session } = useAuth();  // Get session to verify the logged-in user
-  const navigate = useNavigate();  // For navigation, e.g. redirect to login
-  const queryClient = useQueryClient(); // For managing query cache
+  const { session } = useAuth();
+  const navigate = useNavigate();
 
-  // Redirect to login page if no session is available
   useEffect(() => {
     console.log("Employees: Checking session", session);
     if (!session) {
@@ -36,7 +33,6 @@ const Employees = () => {
     }
   }, [session, navigate]);
 
-  // Fetch the list of employees from Supabase
   const { data: employees, isLoading } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
@@ -50,23 +46,32 @@ const Employees = () => {
     },
   });
 
-  // Mutation to delete employee
   const deleteEmployee = useMutation({
     mutationFn: async (id: string) => {
-      // Deleting the employee from the profiles table
       const { error } = await supabase
         .from("profiles")
         .delete()
         .eq("id", id);
-      if (error) throw error;
-      console.log(`Employee with ID ${id} deleted.`);
+
+      if (error) {
+        console.error("Error deleting employee:", error);
+        throw new Error("Failed to delete employee");
+      }
+
+      console.log("Employee deleted successfully");
     },
     onSuccess: () => {
-      // Invalidate the cache and refetch the employee list
+      // Invalidate the query to refetch the list of employees after deletion
       queryClient.invalidateQueries({ queryKey: ["employees"] });
     },
     onError: (error: any) => {
       console.error("Error deleting employee:", error);
+      const errorMessage = error.message || "Failed to delete employee. Please try again.";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
     },
   });
 
@@ -94,7 +99,6 @@ const Employees = () => {
         </Dialog>
       </div>
 
-      {/* Employees Grid */}
       <div className="grid gap-4">
         {isLoading ? (
           <Card>
