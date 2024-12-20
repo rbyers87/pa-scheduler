@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ScheduleDisplay } from "./ScheduleDisplay";
 import { useScheduleOperations } from "./hooks/useScheduleOperations";
-import { TimeBlock } from "./types/TimeBlock";
+import { TimeBlock, ScheduleData } from "./types/TimeBlock";
 
 interface DailyScheduleProps {
   date: Date;
@@ -17,7 +17,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
   const { session } = useAuth();
   const { handleDeleteSchedule, handleUpdateSchedule } = useScheduleOperations();
 
-  const { data: schedules, refetch, isLoading, error } = useQuery<TimeBlock[]>({
+  const { data: schedules, refetch, isLoading, error } = useQuery<ScheduleData[]>({
     queryKey: ["schedules", date],
     queryFn: async () => {
       if (!session?.user?.id) {
@@ -92,11 +92,10 @@ export function DailySchedule({ date }: DailyScheduleProps) {
             start_time: startTime.toISOString(),
             end_time: endTime.toISOString(),
             employee: recurring.employee,
-            isRecurring: true,
           };
         });
 
-      const allSchedules: TimeBlock[] = [...regularSchedules, ...generatedSchedules];
+      const allSchedules = [...regularSchedules, ...generatedSchedules] as ScheduleData[];
       console.log("DailySchedule: Successfully fetched all schedules:", allSchedules);
       return allSchedules;
     },
@@ -122,7 +121,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
   }
 
   // Function to generate time blocks for the day
-  function generateTimeBlocks(schedules: TimeBlock[], date: Date) {
+  function generateTimeBlocks(schedules: ScheduleData[], date: Date): TimeBlock[] {
     const blocks: TimeBlock[] = [];
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
@@ -151,9 +150,8 @@ export function DailySchedule({ date }: DailyScheduleProps) {
         if (!block.time) return;
         const blockTime = new Date(`${date.toISOString().split("T")[0]}T${block.time}:00`);
         if (blockTime >= startTime && blockTime < endTime) {
-          if (!block.schedules) block.schedules = [];
           block.schedules.push({
-            scheduleId: schedule.id || '',
+            scheduleId: schedule.id,
             employeeName: employeeName,
             start_time: schedule.start_time,
             end_time: schedule.end_time,

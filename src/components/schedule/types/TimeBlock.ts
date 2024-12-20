@@ -3,9 +3,6 @@ export interface TimeBlock {
   time: string;
   start_time?: string;
   end_time?: string;
-  hasSchedule?: boolean;
-  scheduleId?: string;
-  employeeName?: string;
   employee?: {
     first_name: string;
     last_name: string;
@@ -16,4 +13,14 @@ export interface TimeBlock {
     start_time: string;
     end_time: string;
   }>;
+}
+
+export interface ScheduleData {
+  id: string;
+  start_time: string;
+  end_time: string;
+  employee: {
+    first_name: string;
+    last_name: string;
+  };
 }
