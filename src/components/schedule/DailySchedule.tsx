@@ -123,7 +123,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
       <div className="relative h-full overflow-auto">
         {/* Schedule Blocks */}
         <ScheduleDisplay
-          schedules={schedules}
+          timeBlocks={generateTimeBlocks(schedules, date)}
           onDelete={handleDeleteSchedule}
           onScheduleUpdate={refetch}
           onScheduleResize={handleUpdateSchedule}
