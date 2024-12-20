@@ -1,37 +1,24 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format, addDays, startOfDay } from "date-fns";
-import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { addDays, startOfDay } from "date-fns";
+import { TimeOffRequestDialog } from "./TimeOffRequestDialog";
+import { ScheduleTable } from "./ScheduleTable";
+import { Schedule } from "./types/scheduleTypes";
 
 export function FutureSchedule() {
   const { session } = useAuth();
   const { toast } = useToast();
-  const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
-  const [selectedBenefitType, setSelectedBenefitType] = useState<string>("");
+  const queryClient = useQueryClient();
+  const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
 
   // Fetch regular schedules
   const { data: regularSchedules } = useQuery({
     queryKey: ["future-schedules", session?.user?.id],
     queryFn: async () => {
+      console.log("FutureSchedule: Fetching regular schedules");
       const today = new Date();
       const { data, error } = await supabase
         .from("schedules")
@@ -51,6 +38,7 @@ export function FutureSchedule() {
   const { data: recurringSchedules } = useQuery({
     queryKey: ["recurring-schedules", session?.user?.id],
     queryFn: async () => {
+      console.log("FutureSchedule: Fetching recurring schedules");
       const { data, error } = await supabase
         .from("recurring_schedules")
         .select(`
@@ -74,6 +62,7 @@ export function FutureSchedule() {
   const { data: benefitBalances } = useQuery({
     queryKey: ["benefit-balances", session?.user?.id],
     queryFn: async () => {
+      console.log("FutureSchedule: Fetching benefit balances");
       const { data, error } = await supabase
         .from("benefit_balances")
         .select("*")
@@ -86,38 +75,38 @@ export function FutureSchedule() {
     enabled: !!session?.user?.id,
   });
 
-  const handleRequestTimeOff = async () => {
-    if (!selectedSchedule || !selectedBenefitType || !session?.user?.id) return;
-
-    try {
+  const createTimeOffRequest = useMutation({
+    mutationFn: async ({ startDate, endDate, type }: { startDate: Date; endDate: Date; type: string }) => {
+      console.log("FutureSchedule: Creating time off request", { startDate, endDate, type });
       const { error } = await supabase
         .from("time_off_requests")
         .insert({
-          employee_id: session.user.id,
-          start_date: new Date(selectedSchedule.startTime).toISOString(),
-          end_date: new Date(selectedSchedule.endTime).toISOString(),
-          type: selectedBenefitType,
-          notes: `Requested off for ${selectedSchedule.isRecurring ? 'recurring' : 'regular'} shift`,
+          employee_id: session?.user?.id,
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          type,
+          notes: `Requested off for ${selectedSchedule?.isRecurring ? 'recurring' : 'regular'} shift`,
         });
 
       if (error) throw error;
-
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["time-off-requests"] });
       toast({
         title: "Time off request submitted",
         description: "Your request has been submitted for review.",
       });
-
       setSelectedSchedule(null);
-      setSelectedBenefitType("");
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error submitting time off request:", error);
       toast({
         title: "Error",
         description: "Failed to submit time off request. Please try again.",
         variant: "destructive",
       });
-    }
-  };
+    },
+  });
 
   // Process recurring schedules to get next occurrences
   const getNextRecurringSchedules = () => {
@@ -125,7 +114,7 @@ export function FutureSchedule() {
     
     const today = startOfDay(new Date());
     const nextTwoWeeks = addDays(today, 14);
-    const schedules = [];
+    const schedules: Schedule[] = [];
 
     recurringSchedules.forEach((recSchedule) => {
       let currentDate = new Date(recSchedule.begin_date);
@@ -164,7 +153,7 @@ export function FutureSchedule() {
 
   // Combine and sort all schedules
   const getAllSchedules = () => {
-    const regular = (regularSchedules || []).map(schedule => ({
+    const regular: Schedule[] = (regularSchedules || []).map(schedule => ({
       date: new Date(schedule.start_time),
       startTime: new Date(schedule.start_time),
       endTime: new Date(schedule.end_time),
@@ -178,122 +167,36 @@ export function FutureSchedule() {
     );
   };
 
+  const handleRequestOff = (schedule: Schedule) => {
+    setSelectedSchedule(schedule);
+  };
+
+  const handleTimeOffSubmit = (type: string) => {
+    if (!selectedSchedule) return;
+    
+    createTimeOffRequest.mutate({
+      startDate: selectedSchedule.startTime,
+      endDate: selectedSchedule.endTime,
+      type,
+    });
+  };
+
   const combinedSchedules = getAllSchedules();
 
   return (
     <>
-      <div className="relative overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Start Time</TableHead>
-              <TableHead>End Time</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {combinedSchedules.map((schedule, index) => (
-              <TableRow key={`${schedule.date.toISOString()}-${index}`}>
-                <TableCell>
-                  {format(schedule.date, "MMM d, yyyy")}
-                </TableCell>
-                <TableCell>
-                  {format(schedule.startTime, "h:mm a")}
-                </TableCell>
-                <TableCell>
-                  {format(schedule.endTime, "h:mm a")}
-                </TableCell>
-                <TableCell>
-                  {schedule.isRecurring ? (
-                    <span className="text-blue-600">
-                      Recurring {schedule.shiftName}
-                    </span>
-                  ) : (
-                    <span className="text-gray-600">Regular</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setSelectedSchedule(schedule)}
-                  >
-                    Request Off
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {combinedSchedules.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">
-                  No upcoming schedules found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <ScheduleTable
+        schedules={combinedSchedules}
+        onRequestOff={handleRequestOff}
+      />
 
-      <Dialog open={!!selectedSchedule} onOpenChange={(open) => !open && setSelectedSchedule(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Request Time Off</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <div>
-              <p className="text-sm text-muted-foreground">
-                {selectedSchedule && format(selectedSchedule.date, "MMMM d, yyyy")}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {selectedSchedule && `${format(selectedSchedule.startTime, "h:mm a")} - ${format(selectedSchedule.endTime, "h:mm a")}`}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="benefitType">Select Benefit Type</Label>
-              <Select value={selectedBenefitType} onValueChange={setSelectedBenefitType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select benefit type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {benefitBalances?.vacation_hours > 0 && (
-                    <SelectItem value="vacation">
-                      Vacation ({benefitBalances.vacation_hours} hours)
-                    </SelectItem>
-                  )}
-                  {benefitBalances?.sick_hours > 0 && (
-                    <SelectItem value="sick">
-                      Sick Leave ({benefitBalances.sick_hours} hours)
-                    </SelectItem>
-                  )}
-                  {benefitBalances?.comp_hours > 0 && (
-                    <SelectItem value="comp">
-                      Comp Time ({benefitBalances.comp_hours} hours)
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedSchedule(null)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleRequestTimeOff}
-                disabled={!selectedBenefitType}
-              >
-                Submit Request
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <TimeOffRequestDialog
+        schedule={selectedSchedule}
+        open={!!selectedSchedule}
+        onOpenChange={(open) => !open && setSelectedSchedule(null)}
+        onSubmit={handleTimeOffSubmit}
+        benefitBalances={benefitBalances}
+      />
     </>
   );
 }

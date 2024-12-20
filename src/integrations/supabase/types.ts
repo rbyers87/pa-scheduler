@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           comp_hours: number | null
           created_at: string
+          holiday_hours: number | null
           id: string
           sick_hours: number | null
           updated_at: string
@@ -22,6 +23,7 @@ export type Database = {
         Insert: {
           comp_hours?: number | null
           created_at?: string
+          holiday_hours?: number | null
           id?: string
           sick_hours?: number | null
           updated_at?: string
@@ -31,6 +33,7 @@ export type Database = {
         Update: {
           comp_hours?: number | null
           created_at?: string
+          holiday_hours?: number | null
           id?: string
           sick_hours?: number | null
           updated_at?: string
