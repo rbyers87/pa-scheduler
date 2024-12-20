@@ -21,27 +21,19 @@ export function ScheduleList() {
     queryKey: ["employees"],
     queryFn: async () => {
       if (!session?.user?.id) {
+        console.log("ScheduleList: No user ID in session");
         throw new Error("Authentication required");
       }
 
       if (!accessToken) {
+        console.log("ScheduleList: No access token");
         throw new Error("Access token required for API requests");
       }
 
-      const { data: currentUserProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error("Error fetching user profile:", profileError);
-        throw new Error("Failed to verify user permissions");
-      }
-
-      if (!currentUserProfile) {
-        throw new Error("User profile not found");
-      }
+      console.log("ScheduleList: Fetching employees with session", {
+        userId: session.user.id,
+        role: session.user.user_metadata?.role
+      });
 
       const { data, error: employeesError } = await supabase
         .from("profiles")
@@ -53,6 +45,7 @@ export function ScheduleList() {
         throw employeesError;
       }
 
+      console.log("ScheduleList: Successfully fetched employees", data);
       return data;
     },
     meta: {

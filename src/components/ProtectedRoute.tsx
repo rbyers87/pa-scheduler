@@ -8,19 +8,24 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   useEffect(() => {
-    console.log("ProtectedRoute: Checking session state", { session, accessToken });
+    console.log("ProtectedRoute: Session state", { 
+      session: session?.user?.id, 
+      accessToken,
+      role: session?.user?.user_metadata?.role 
+    });
 
-    if (session === null || accessToken === null) {
-      console.log("ProtectedRoute: No session or accessToken, redirecting to login");
+    if (!session?.user?.id || !accessToken) {
+      console.log("ProtectedRoute: No valid session, redirecting to login");
       navigate("/login", {
         replace: true,
         state: { from: location.pathname },
       });
+      return;
     }
   }, [session, accessToken, navigate, location]);
 
-  if (session === undefined || accessToken === undefined) {
-    console.log("ProtectedRoute: Session or accessToken loading");
+  if (!session?.user?.id || !accessToken) {
+    console.log("ProtectedRoute: Loading or no session");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
@@ -28,11 +33,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!session || !accessToken) {
-    console.log("ProtectedRoute: No valid session or accessToken, returning null");
-    return null;
-  }
-
-  console.log("ProtectedRoute: Valid session and accessToken, rendering content");
+  console.log("ProtectedRoute: Rendering protected content");
   return <>{children}</>;
 };
