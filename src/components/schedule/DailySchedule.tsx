@@ -31,7 +31,6 @@ export function DailySchedule({ date }: DailyScheduleProps) {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      // Get regular schedules
       const { data: regularSchedules, error: regularError } = await supabase
         .from("schedules")
         .select(`
@@ -48,7 +47,6 @@ export function DailySchedule({ date }: DailyScheduleProps) {
 
       if (regularError) throw regularError;
 
-      // Get recurring schedules
       const { data: recurringSchedules, error: recurringError } = await supabase
         .from("recurring_schedules")
         .select(`
@@ -68,7 +66,6 @@ export function DailySchedule({ date }: DailyScheduleProps) {
 
       if (recurringError) throw recurringError;
 
-      // Convert recurring schedules for this day
       const dayOfWeek = date.getDay();
       const generatedSchedules = recurringSchedules
         .filter((recurring) => recurring.days.includes(dayOfWeek))
@@ -137,11 +134,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
   };
 
   if (error) {
-    return (
-      <div className="p-4 text-red-500">
-        Error loading schedules: {error.message}
-      </div>
-    );
+    return <div className="p-4 text-red-500">Error loading schedules: {error.message}</div>;
   }
 
   if (isLoading) {
@@ -151,7 +144,9 @@ export function DailySchedule({ date }: DailyScheduleProps) {
   const timeBlocks: TimeBlock[] = Array.from({ length: 96 }, (_, index) => {
     const hours = Math.floor(index / 4);
     const minutes = (index % 4) * 15;
-    const time = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+    const time = `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}`;
     return { time, hasSchedule: false };
   });
 
@@ -160,8 +155,10 @@ export function DailySchedule({ date }: DailyScheduleProps) {
       const startTime = new Date(schedule.start_time);
       const endTime = new Date(schedule.end_time);
 
-      const startIndex = startTime.getHours() * 4 + Math.floor(startTime.getMinutes() / 15);
-      const endIndex = endTime.getHours() * 4 + Math.floor(endTime.getMinutes() / 15);
+      const startIndex =
+        startTime.getHours() * 4 + Math.floor(startTime.getMinutes() / 15);
+      const endIndex =
+        endTime.getHours() * 4 + Math.floor(endTime.getMinutes() / 15);
 
       for (let i = startIndex; i < endIndex; i++) {
         if (timeBlocks[i]) {
@@ -181,17 +178,19 @@ export function DailySchedule({ date }: DailyScheduleProps) {
         </h3>
       </div>
       <div className="relative h-full overflow-auto">
-        <div className="grid auto-rows-min">
-          <div className="grid grid-cols-96 gap-1">
-            {Array.from({ length: 24 }).map((_, hour) => (
-              <div
-                key={`hour-label-${hour}`}
-                className="text-center text-xs font-medium col-span-4"
-              >
-                {hour}:00
-              </div>
-            ))}
-          </div>
+        {/* Time Labels Row */}
+        <div className="grid grid-cols-96 gap-1 text-xs font-medium mb-2">
+          {Array.from({ length: 24 }).map((_, hour) => (
+            <div
+              key={`hour-label-${hour}`}
+              className="col-span-4 text-center border-r last:border-r-0"
+            >
+              {hour}:00
+            </div>
+          ))}
+        </div>
+        {/* Schedule Blocks */}
+        <div className="grid grid-cols-96 gap-1">
           <ScheduleDisplay
             timeBlocks={timeBlocks}
             onDelete={handleDeleteSchedule}
