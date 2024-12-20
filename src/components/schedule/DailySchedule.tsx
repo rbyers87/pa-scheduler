@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ScheduleDisplay } from "./ScheduleDisplay";
 import { useScheduleOperations } from "./hooks/useScheduleOperations";
-import { TimeBlock } from "./types/TimeBlock";  // Importing the TimeBlock type
+import { TimeBlock } from "./types/TimeBlock";
 
 interface DailyScheduleProps {
   date: Date;
@@ -96,7 +96,6 @@ export function DailySchedule({ date }: DailyScheduleProps) {
           };
         });
 
-      // Merge regular and recurring schedules
       const allSchedules: TimeBlock[] = [...regularSchedules, ...generatedSchedules];
       console.log("DailySchedule: Successfully fetched all schedules:", allSchedules);
       return allSchedules;
@@ -123,7 +122,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
   }
 
   // Function to generate time blocks for the day
-  function generateTimeBlocks(schedules: any[], date: Date) {
+  function generateTimeBlocks(schedules: TimeBlock[], date: Date) {
     const blocks: any[] = [];
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
@@ -170,7 +169,6 @@ export function DailySchedule({ date }: DailyScheduleProps) {
         </h3>
       </div>
       <div className="relative h-full overflow-auto">
-        {/* Schedule Blocks */}
         <ScheduleDisplay
           timeBlocks={generateTimeBlocks(schedules, date)}
           onDelete={handleDeleteSchedule}
