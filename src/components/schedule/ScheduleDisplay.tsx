@@ -71,7 +71,8 @@ export function ScheduleDisplay({
       <div className="flex min-w-[200%] md:min-w-full">
         {timeBlocks.map((block, index) => {
           const isStart = !timeBlocks[index - 1]?.hasSchedule && block.hasSchedule;
-          
+          const isWholeHour = index % 4 === 0; // Check if block represents the start of an hour
+
           return (
             <div
               key={block.time}
@@ -83,9 +84,11 @@ export function ScheduleDisplay({
               onMouseDown={() => handleMouseDown(index, block.scheduleId)}
               onMouseMove={() => handleMouseMove(index)}
             >
-              <div className="absolute -top-6 text-xs">
-                {block.time}
-              </div>
+              {isWholeHour && (
+                <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-500 font-semibold">
+                  {block.time}
+                </div>
+              )}
               {isStart && block.employeeName && (
                 <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-1 bg-blue-200 text-xs">
                   <span>{block.employeeName}</span>
