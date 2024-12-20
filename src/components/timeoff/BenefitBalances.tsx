@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 
 export function BenefitBalances() {
-  const { session } = useAuth();
+  const { session, accessToken } = useAuth();
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
 
@@ -37,7 +37,7 @@ export function BenefitBalances() {
       console.log("BenefitBalances: Successfully fetched profile", data);
       return data;
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id && !!accessToken,
   });
 
   const { data: balances, isLoading, error } = useQuery({
@@ -64,7 +64,7 @@ export function BenefitBalances() {
       console.log("BenefitBalances: Successfully fetched balances", data);
       return data;
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id && !!accessToken,
   });
 
   if (error) {
