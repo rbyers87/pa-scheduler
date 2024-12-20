@@ -62,6 +62,11 @@ export function ScheduleDisplay({
     }
   };
 
+  // Ensure the time blocks are not empty and the component renders
+  if (!timeBlocks || timeBlocks.length === 0) {
+    return <div>No schedules available for this day</div>;
+  }
+
   return (
     <div
       className="overflow-x-auto"
