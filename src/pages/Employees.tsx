@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -20,14 +20,14 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { EmployeeForm } from "@/components/employees/EmployeeForm";
 import { EditEmployeeDialog } from "@/components/employees/EditEmployeeDialog";
-import { useToast } from "@/components/ui/use-toast";
 
+// Employee list page component
 const Employees = () => {
-  const { session } = useAuth();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { session } = useAuth();  // Get session to verify the logged-in user
+  const navigate = useNavigate();  // For navigation, e.g. redirect to login
+  const queryClient = useQueryClient(); // For managing query cache
 
+  // Redirect to login page if no session is available
   useEffect(() => {
     console.log("Employees: Checking session", session);
     if (!session) {
@@ -36,6 +36,7 @@ const Employees = () => {
     }
   }, [session, navigate]);
 
+  // Fetch the list of employees from Supabase
   const { data: employees, isLoading } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
@@ -49,29 +50,23 @@ const Employees = () => {
     },
   });
 
+  // Mutation to delete employee
   const deleteEmployee = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("profiles").delete().eq("id", id);
-
-      if (error) {
-        console.error("Error deleting employee:", error);
-        throw new Error("Failed to delete employee");
-      }
+      // Deleting the employee from the profiles table
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      console.log(`Employee with ID ${id} deleted.`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["employees"]);
-      toast({
-        title: "Success",
-        description: "Employee deleted successfully",
-      });
+      // Invalidate the cache and refetch the employee list
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
     },
     onError: (error: any) => {
-      console.error("Delete employee error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete employee",
-        variant: "destructive",
-      });
+      console.error("Error deleting employee:", error);
     },
   });
 
@@ -99,6 +94,7 @@ const Employees = () => {
         </Dialog>
       </div>
 
+      {/* Employees Grid */}
       <div className="grid gap-4">
         {isLoading ? (
           <Card>
@@ -117,13 +113,14 @@ const Employees = () => {
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <EditEmployeeDialog employee={employee} />
+                  {/* Conditionally show the delete button if the user is an admin */}
                   {session?.user?.role === "admin" && (
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => {
                         if (window.confirm(`Are you sure you want to delete ${employee.first_name}?`)) {
-                          deleteEmployee.mutate(employee.id);
+                          deleteEmployee.mutate(employee.id); // Delete the employee
                         }
                       }}
                     >
