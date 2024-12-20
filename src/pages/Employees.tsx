@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -20,10 +20,13 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { EmployeeForm } from "@/components/employees/EmployeeForm";
 import { EditEmployeeDialog } from "@/components/employees/EditEmployeeDialog";
+import { useToast } from "@/components/ui/use-toast";
 
 const Employees = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   useEffect(() => {
     console.log("Employees: Checking session", session);
@@ -39,10 +42,36 @@ const Employees = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .order("last_name", { ascending: true }); // Sort by last name here
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
+    },
+  });
+
+  const deleteEmployee = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("profiles").delete().eq("id", id);
+
+      if (error) {
+        console.error("Error deleting employee:", error);
+        throw new Error("Failed to delete employee");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["employees"]);
+      toast({
+        title: "Success",
+        description: "Employee deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Delete employee error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete employee",
+        variant: "destructive",
+      });
     },
   });
 
@@ -86,7 +115,22 @@ const Employees = () => {
                 <CardTitle>
                   {employee.first_name} {employee.last_name}
                 </CardTitle>
-                <EditEmployeeDialog employee={employee} />
+                <div className="flex items-center gap-2">
+                  <EditEmployeeDialog employee={employee} />
+                  {session?.user?.role === "admin" && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        if (window.confirm(`Are you sure you want to delete ${employee.first_name}?`)) {
+                          deleteEmployee.mutate(employee.id);
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
