@@ -122,7 +122,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Create a list of all time blocks for the given day
+    // Create a list of all time blocks for the given day (15-minute intervals)
     for (let time = startOfDay.getTime(); time <= endOfDay.getTime(); time += 900000) { // 900000 ms = 15 minutes
       const blockTime = new Date(time);
       blocks.push({
