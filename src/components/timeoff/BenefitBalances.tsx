@@ -54,6 +54,11 @@ export function BenefitBalances() {
         throw new Error("Employee ID required");
       }
 
+      if (!isAdmin && effectiveEmployeeId !== session?.user?.id) {
+        console.error("BenefitBalances: Unauthorized access attempt");
+        throw new Error("Unauthorized");
+      }
+
       const { data, error } = await supabase
         .from("benefit_balances")
         .select("*")
@@ -68,7 +73,7 @@ export function BenefitBalances() {
       console.log("BenefitBalances: Successfully fetched balances", data);
       return data;
     },
-    enabled: !!effectiveEmployeeId,
+    enabled: !!effectiveEmployeeId && !!userProfile,
   });
 
   if (error) {
@@ -138,7 +143,7 @@ export function BenefitBalances() {
         <AdjustBalanceDialog
           open={isAdjustDialogOpen}
           onOpenChange={setIsAdjustDialogOpen}
-          employeeId={selectedEmployeeId}
+          employeeId={effectiveEmployeeId}
         />
       )}
     </div>

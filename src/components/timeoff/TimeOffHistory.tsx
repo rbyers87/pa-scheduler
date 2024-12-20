@@ -14,23 +14,67 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 
-export function TimeOffHistory() {
-  const { session } = useAuth();
+interface TimeOffHistoryProps {
+  employeeId?: string;
+}
 
-  const { data: requests, isLoading, error } = useQuery({
-    queryKey: ["time-off-requests", session?.user?.id],
+export function TimeOffHistory({ employeeId }: TimeOffHistoryProps) {
+  const { session } = useAuth();
+  const effectiveEmployeeId = employeeId || session?.user?.id;
+
+  const { data: userProfile } = useQuery({
+    queryKey: ["profile", session?.user?.id],
     queryFn: async () => {
-      console.log("TimeOffHistory: Fetching requests for user", session?.user?.id);
-      
+      console.log("TimeOffHistory: Fetching user profile");
       if (!session?.user?.id) {
         console.error("TimeOffHistory: No authenticated user");
         throw new Error("Authentication required");
       }
 
       const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error) {
+        console.error("TimeOffHistory: Error fetching profile:", error);
+        throw error;
+      }
+
+      console.log("TimeOffHistory: Successfully fetched profile", data);
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  const { data: requests, isLoading, error } = useQuery({
+    queryKey: ["time-off-requests", effectiveEmployeeId],
+    queryFn: async () => {
+      console.log("TimeOffHistory: Fetching requests for user", effectiveEmployeeId);
+      
+      if (!session?.user?.id) {
+        console.error("TimeOffHistory: No authenticated user");
+        throw new Error("Authentication required");
+      }
+
+      if (!effectiveEmployeeId) {
+        console.error("TimeOffHistory: No employee ID provided");
+        throw new Error("Employee ID required");
+      }
+
+      const isAdmin = userProfile?.role === "admin";
+      console.log("TimeOffHistory: User is admin:", isAdmin);
+
+      if (!isAdmin && effectiveEmployeeId !== session.user.id) {
+        console.error("TimeOffHistory: Unauthorized access attempt");
+        throw new Error("Unauthorized");
+      }
+
+      const { data, error } = await supabase
         .from("time_off_requests")
         .select("*")
-        .eq("employee_id", session.user.id)
+        .eq("employee_id", effectiveEmployeeId)
         .order("start_date", { ascending: false });
 
       if (error) {
@@ -41,7 +85,7 @@ export function TimeOffHistory() {
       console.log("TimeOffHistory: Successfully fetched requests", data);
       return data;
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id && !!userProfile,
   });
 
   if (error) {
