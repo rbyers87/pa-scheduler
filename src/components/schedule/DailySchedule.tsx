@@ -123,7 +123,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
 
   // Function to generate time blocks for the day
   function generateTimeBlocks(schedules: TimeBlock[], date: Date) {
-    const blocks: any[] = [];
+    const blocks: TimeBlock[] = [];
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -131,7 +131,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
     endOfDay.setHours(23, 59, 59, 999);
 
     // Create a list of all time blocks for the given day (15-minute intervals)
-    for (let time = startOfDay.getTime(); time <= endOfDay.getTime(); time += 900000) { // 900000 ms = 15 minutes
+    for (let time = startOfDay.getTime(); time <= endOfDay.getTime(); time += 900000) {
       const blockTime = new Date(time);
       blocks.push({
         time: format(blockTime, "HH:mm"),
@@ -141,16 +141,19 @@ export function DailySchedule({ date }: DailyScheduleProps) {
 
     // Now, map the schedules to the time blocks
     schedules.forEach((schedule) => {
+      if (!schedule.start_time || !schedule.end_time || !schedule.employee) return;
+      
       const startTime = new Date(schedule.start_time);
       const endTime = new Date(schedule.end_time);
       const employeeName = `${schedule.employee.first_name} ${schedule.employee.last_name}`;
 
-      // Mark time blocks as having a schedule within the schedule's time range
       blocks.forEach((block) => {
+        if (!block.time) return;
         const blockTime = new Date(`${date.toISOString().split("T")[0]}T${block.time}:00`);
         if (blockTime >= startTime && blockTime < endTime) {
+          if (!block.schedules) block.schedules = [];
           block.schedules.push({
-            scheduleId: schedule.id,
+            scheduleId: schedule.id || '',
             employeeName: employeeName,
             start_time: schedule.start_time,
             end_time: schedule.end_time,
@@ -162,6 +165,16 @@ export function DailySchedule({ date }: DailyScheduleProps) {
     return blocks;
   }
 
+  const handleScheduleResize = (scheduleId: string, startBlock: number, endBlock: number) => {
+    const startTime = new Date(date);
+    startTime.setHours(Math.floor(startBlock / 4), (startBlock % 4) * 15, 0);
+    
+    const endTime = new Date(date);
+    endTime.setHours(Math.floor(endBlock / 4), (endBlock % 4) * 15, 0);
+    
+    handleUpdateSchedule(scheduleId, startTime, endTime);
+  };
+
   return (
     <Card className="p-4 h-[calc(100vh-100px)] overflow-hidden">
       <div className="mb-4">
@@ -171,10 +184,10 @@ export function DailySchedule({ date }: DailyScheduleProps) {
       </div>
       <div className="relative h-full overflow-auto">
         <ScheduleDisplay
-          timeBlocks={generateTimeBlocks(schedules, date)}
+          timeBlocks={generateTimeBlocks(schedules || [], date)}
           onDelete={handleDeleteSchedule}
           onScheduleUpdate={refetch}
-          onScheduleResize={handleUpdateSchedule}
+          onScheduleResize={handleScheduleResize}
         />
       </div>
     </Card>

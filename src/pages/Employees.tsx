@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import {
   Card,
   CardContent,
@@ -24,6 +25,8 @@ import { EditEmployeeDialog } from "@/components/employees/EditEmployeeDialog";
 const Employees = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     console.log("Employees: Checking session", session);
