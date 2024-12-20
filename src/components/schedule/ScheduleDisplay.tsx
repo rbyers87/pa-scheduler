@@ -3,15 +3,31 @@ import { Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
+// Helper function to generate time blocks between start_time and end_time
+const generateTimeBlocks = (start: string, end: string) => {
+  const startTime = new Date(start);
+  const endTime = new Date(end);
+  const timeBlocks = [];
+  let currentTime = new Date(startTime);
+
+  while (currentTime < endTime) {
+    const timeStr = currentTime.toISOString().split('T')[1].slice(0, 5); // Extract HH:mm
+    timeBlocks.push({
+      time: timeStr,
+      hasSchedule: false,
+    });
+    currentTime.setMinutes(currentTime.getMinutes() + 30); // Increment by 30 minutes
+  }
+
+  return timeBlocks;
+};
+
 interface ScheduleDisplayProps {
   schedules: Array<{
     scheduleId: string;
     employeeName: string;
-    timeBlocks: Array<{
-      time: string;
-      hasSchedule: boolean;
-      scheduleId?: string;
-    }>;
+    startTime: string;
+    endTime: string;
   }>;
   onDelete: (scheduleId: string) => void;
   onScheduleUpdate: () => void;
@@ -70,23 +86,16 @@ export function ScheduleDisplay({
   return (
     <div className="overflow-auto">
       {schedules.map((schedule) => {
-        // Check if timeBlocks exist and are an array
-        if (!Array.isArray(schedule.timeBlocks) || schedule.timeBlocks.length === 0) {
-          return (
-            <div key={schedule.scheduleId} className="mb-4">
-              <h3 className="text-sm font-semibold text-center">{schedule.employeeName}</h3>
-              <div>No time blocks available for this schedule</div>
-            </div>
-          );
-        }
+        // Generate timeBlocks dynamically based on the schedule's start and end time
+        const timeBlocks = generateTimeBlocks(schedule.startTime, schedule.endTime);
 
         return (
           <div key={schedule.scheduleId} className="mb-4">
             <h3 className="text-sm font-semibold text-center">{schedule.employeeName}</h3>
 
             <div className="flex flex-row space-x-2">
-              {schedule.timeBlocks.map((block, index) => {
-                const isStart = !schedule.timeBlocks[index - 1]?.hasSchedule && block.hasSchedule;
+              {timeBlocks.map((block, index) => {
+                const isStart = !timeBlocks[index - 1]?.hasSchedule && block.hasSchedule;
                 const isWholeHour = index % 4 === 0;
 
                 return (
@@ -97,7 +106,7 @@ export function ScheduleDisplay({
                       ${isDragging ? 'select-none' : ''} 
                       ${block.hasSchedule && isStart ? 'flex-col' : ''}
                     `}
-                    onMouseDown={() => handleMouseDown(index, block.scheduleId)}
+                    onMouseDown={() => handleMouseDown(index, schedule.scheduleId)}
                     onMouseMove={() => handleMouseMove(index)}
                   >
                     {isWholeHour && (
