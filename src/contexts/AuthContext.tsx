@@ -39,6 +39,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         console.log("AuthProvider: Initial session retrieved", initialSession);
+        
         if (initialSession) {
           setSession(initialSession);
           setUser(initialSession.user);
@@ -47,28 +48,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(null);
           setUser(null);
           setAccessToken(null);
+          navigate("/login");
         }
       } catch (error) {
         console.error("Error getting initial session:", error);
         setSession(null);
         setUser(null);
         setAccessToken(null);
+        navigate("/login");
       }
     };
 
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, currentSession) => {
-        console.log("Auth state changed:", _event, currentSession);
+      async (event, currentSession) => {
+        console.log("Auth state changed:", event, currentSession);
         
         if (currentSession) {
           setSession(currentSession);
           setUser(currentSession.user);
           setAccessToken(currentSession.access_token);
           
-          if (_event === 'SIGNED_IN') {
-            console.log("User signed in, navigating to /");
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            console.log("User signed in or token refreshed, navigating to /");
             navigate("/");
           }
         } else {
@@ -76,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(null);
           setAccessToken(null);
           
-          if (_event === 'SIGNED_OUT') {
+          if (event === 'SIGNED_OUT') {
             console.log("User signed out, navigating to login");
             navigate("/login");
           }

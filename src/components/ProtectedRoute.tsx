@@ -10,7 +10,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log("ProtectedRoute: Checking session state", { session, accessToken });
 
-    if (!session || !accessToken) {
+    if (session === null || accessToken === null) {
       console.log("ProtectedRoute: No session or accessToken, redirecting to login");
       navigate("/login", {
         replace: true,
