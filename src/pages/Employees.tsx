@@ -39,7 +39,7 @@ const Employees = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("last_name", { ascending: true }); // Sort by last name here
 
       if (error) throw error;
       return data;
