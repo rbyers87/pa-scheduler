@@ -135,9 +135,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
       const blockTime = new Date(time);
       blocks.push({
         time: format(blockTime, "HH:mm"),
-        hasSchedule: false,
-        scheduleId: "",
-        employeeName: "",
+        schedules: [],
       });
     }
 
@@ -151,9 +149,12 @@ export function DailySchedule({ date }: DailyScheduleProps) {
       blocks.forEach((block) => {
         const blockTime = new Date(`${date.toISOString().split("T")[0]}T${block.time}:00`);
         if (blockTime >= startTime && blockTime < endTime) {
-          block.hasSchedule = true;
-          block.scheduleId = schedule.id;
-          block.employeeName = employeeName;
+          block.schedules.push({
+            scheduleId: schedule.id,
+            employeeName: employeeName,
+            start_time: schedule.start_time,
+            end_time: schedule.end_time,
+          });
         }
       });
     });
