@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 type EmployeeFormData = {
   email: string;
@@ -29,7 +30,8 @@ type EmployeeFormData = {
 
 export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
   const form = useForm<EmployeeFormData>();
-  const { session, accessToken, toast } = useAuth();
+  const { session } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const createEmployee = useMutation({
@@ -39,10 +41,6 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
       if (!session?.user?.id) {
         console.error("No authenticated user found");
         throw new Error("You must be logged in to create employees");
-      }
-
-      if (!accessToken) {
-        throw new Error("Access token required for API requests");
       }
 
       const { data: currentUserProfile, error: profileError } = await supabase
