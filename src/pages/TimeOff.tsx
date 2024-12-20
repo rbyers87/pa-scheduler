@@ -1,10 +1,14 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { BenefitBalances } from "@/components/timeoff/BenefitBalances";
+import { TimeOffRequestForm } from "@/components/timeoff/TimeOffRequestForm";
+import { TimeOffHistory } from "@/components/timeoff/TimeOffHistory";
+import { FutureSchedule } from "@/components/timeoff/FutureSchedule";
 
 const TimeOff = () => {
-  const { session, accessToken } = useAuth();
+  const { session } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,11 +23,38 @@ const TimeOff = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">Time Off</h2>
-      <div className="grid gap-6">
+      <h2 className="text-3xl font-bold tracking-tight">Time Off Management</h2>
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
-          <CardContent className="p-6">
-            <p>Time off management features coming soon.</p>
+          <CardHeader>
+            <CardTitle>Benefit Balances</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BenefitBalances />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Future Schedule</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FutureSchedule />
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Request Time Off</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TimeOffRequestForm />
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Time Off History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TimeOffHistory />
           </CardContent>
         </Card>
       </div>
