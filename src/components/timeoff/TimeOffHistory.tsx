@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 
 export function TimeOffHistory() {
-  const { session, accessToken } = useAuth();
+  const { session } = useAuth();
 
   const { data: requests, isLoading, error } = useQuery({
     queryKey: ["time-off-requests", session?.user?.id],
@@ -27,7 +27,8 @@ export function TimeOffHistory() {
         throw new Error("Authentication required");
       }
 
-      const { data, error } = await supabase.from("time_off_requests")
+      const { data, error } = await supabase
+        .from("time_off_requests")
         .select("*")
         .eq("employee_id", session.user.id)
         .order("start_date", { ascending: false });
@@ -40,7 +41,7 @@ export function TimeOffHistory() {
       console.log("TimeOffHistory: Successfully fetched requests", data);
       return data;
     },
-    enabled: !!session?.user?.id && !!accessToken,
+    enabled: !!session?.user?.id,
   });
 
   if (error) {
