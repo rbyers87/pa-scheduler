@@ -181,10 +181,13 @@ export function DailySchedule({ date }: DailyScheduleProps) {
         </h3>
       </div>
       <div className="relative h-full overflow-auto">
-        <div className="grid grid-cols-24 gap-1 auto-rows-min">
-          <div className="col-span-full grid grid-cols-24 gap-1">
+        <div className="grid auto-rows-min">
+          <div className="grid grid-cols-96 gap-1">
             {Array.from({ length: 24 }).map((_, hour) => (
-              <div key={`hour-label-${hour}`} className="text-center text-xs font-medium col-span-4">
+              <div
+                key={`hour-label-${hour}`}
+                className="text-center text-xs font-medium col-span-4"
+              >
                 {hour}:00
               </div>
             ))}
