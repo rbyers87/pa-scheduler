@@ -7,6 +7,7 @@ import { useState } from "react";
 import { AdjustBalanceDialog } from "./AdjustBalanceDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
+import { EmployeeSelect } from "../schedule/EmployeeSelect";
 
 export function BenefitBalances() {
   const { session } = useAuth();
@@ -40,20 +41,23 @@ export function BenefitBalances() {
     enabled: !!session?.user?.id,
   });
 
+  const isAdmin = userProfile?.role === "admin";
+  const effectiveEmployeeId = isAdmin ? (selectedEmployeeId || session?.user?.id) : session?.user?.id;
+
   const { data: balances, isLoading, error } = useQuery({
-    queryKey: ["benefit-balances", session?.user?.id],
+    queryKey: ["benefit-balances", effectiveEmployeeId],
     queryFn: async () => {
-      console.log("BenefitBalances: Fetching balances for user", session?.user?.id);
+      console.log("BenefitBalances: Fetching balances for user", effectiveEmployeeId);
       
-      if (!session?.user?.id) {
-        console.error("BenefitBalances: No authenticated user");
-        throw new Error("Authentication required");
+      if (!effectiveEmployeeId) {
+        console.error("BenefitBalances: No employee ID");
+        throw new Error("Employee ID required");
       }
 
       const { data, error } = await supabase
         .from("benefit_balances")
         .select("*")
-        .eq("user_id", session.user.id)
+        .eq("user_id", effectiveEmployeeId)
         .single();
 
       if (error) {
@@ -64,7 +68,7 @@ export function BenefitBalances() {
       console.log("BenefitBalances: Successfully fetched balances", data);
       return data;
     },
-    enabled: !!session?.user?.id,
+    enabled: !!effectiveEmployeeId,
   });
 
   if (error) {
@@ -85,10 +89,17 @@ export function BenefitBalances() {
     );
   }
 
-  const isAdmin = userProfile?.role === "admin";
-
   return (
     <div className="space-y-4">
+      {isAdmin && (
+        <div className="mb-6">
+          <EmployeeSelect
+            value={selectedEmployeeId || session?.user?.id || ''}
+            onValueChange={setSelectedEmployeeId}
+          />
+        </div>
+      )}
+      
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
@@ -114,7 +125,7 @@ export function BenefitBalances() {
         <div className="flex justify-end">
           <Button
             onClick={() => {
-              setSelectedEmployeeId(session?.user?.id || null);
+              setSelectedEmployeeId(effectiveEmployeeId);
               setIsAdjustDialogOpen(true);
             }}
           >
