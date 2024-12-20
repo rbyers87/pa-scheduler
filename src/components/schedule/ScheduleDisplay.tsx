@@ -69,11 +69,11 @@ export function ScheduleDisplay({
 
   return (
     <div
-      className="overflow-x-auto"
+      className="overflow-auto"
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      <div className="flex flex-col min-w-[200%] md:min-w-full space-y-2">
+      <div className="flex flex-row space-x-2">
         {timeBlocks.map((block, index) => {
           const isStart = !timeBlocks[index - 1]?.hasSchedule && block.hasSchedule;
           const isWholeHour = index % 4 === 0; // Check if block represents the start of an hour
@@ -81,8 +81,7 @@ export function ScheduleDisplay({
           return (
             <div
               key={block.time}
-              className={`
-                flex min-w-[30px] h-20 border-r border-gray-200 relative cursor-col-resize
+              className={`relative flex flex-col min-w-[30px] h-20 border-r border-gray-200 cursor-col-resize
                 ${block.hasSchedule ? 'bg-blue-100' : 'bg-gray-50'}
                 ${isDragging ? 'select-none' : ''} 
                 ${block.hasSchedule && isStart ? 'flex-col' : ''}
