@@ -31,6 +31,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
+      // Get regular schedules
       const { data: regularSchedules, error: regularError } = await supabase
         .from("schedules")
         .select(`
@@ -45,8 +46,12 @@ export function DailySchedule({ date }: DailyScheduleProps) {
         .gte("start_time", startOfDay.toISOString())
         .lte("end_time", endOfDay.toISOString());
 
-      if (regularError) throw regularError;
+      if (regularError) {
+        console.error("DailySchedule: Error fetching regular schedules:", regularError);
+        throw regularError;
+      }
 
+      // Get recurring schedules
       const { data: recurringSchedules, error: recurringError } = await supabase
         .from("recurring_schedules")
         .select(`
@@ -64,7 +69,10 @@ export function DailySchedule({ date }: DailyScheduleProps) {
         .lte("begin_date", endOfDay.toISOString())
         .or(`end_date.gt.${startOfDay.toISOString()},end_date.is.null`);
 
-      if (recurringError) throw recurringError;
+      if (recurringError) {
+        console.error("DailySchedule: Error fetching recurring schedules:", recurringError);
+        throw recurringError;
+      }
 
       const dayOfWeek = date.getDay();
       const generatedSchedules = recurringSchedules
@@ -88,6 +96,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
           };
         });
 
+      // Merge regular and recurring schedules
       const allSchedules: TimeBlock[] = [...regularSchedules, ...generatedSchedules];
       console.log("DailySchedule: Successfully fetched all schedules:", allSchedules);
       return allSchedules;
