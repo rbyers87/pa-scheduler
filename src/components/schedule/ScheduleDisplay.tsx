@@ -53,12 +53,14 @@ export function ScheduleDisplay({
               {block.schedules.length > 0 &&
                 block.schedules.map((schedule, scheduleIndex) => {
                   const scheduleDuration =
-                    (new Date(schedule.end_time).getTime() -
-                      new Date(schedule.start_time).getTime()) /
-                    60000; // Calculate duration in minutes
+                    (new Date(schedule.end_time).getTime() - new Date(schedule.start_time).getTime()) / 60000; // Calculate duration in minutes
 
                   const scheduleHeight = `${scheduleDuration / 15}rem`; // Set height in rem based on 15-min intervals
-                  const scheduleTop = `${((new Date(schedule.start_time).getMinutes() % 60) / 15) * 2}rem`;
+                  const scheduleTop = `${((new Date(schedule.start_time).getMinutes() % 60) / 15) * 2}rem`; // Set the top position based on the start time
+
+                  // Ensure each schedule within the same block has some space between them
+                  const scheduleLeft = `${(scheduleIndex % 3) * 35}px`; // Limit the maximum number of schedules that can appear side by side
+                  const scheduleZIndex = scheduleIndex; // Increase z-index for stacked schedules
 
                   return (
                     <div
@@ -67,7 +69,8 @@ export function ScheduleDisplay({
                       style={{
                         top: scheduleTop,
                         height: scheduleHeight,
-                        left: `${scheduleIndex * 35}px`, // Offset schedules next to each other
+                        left: scheduleLeft,
+                        zIndex: scheduleZIndex,
                       }}
                     >
                       <div className="bg-blue-200 p-1 text-xs">
