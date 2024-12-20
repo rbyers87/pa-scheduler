@@ -39,16 +39,13 @@ export function ScheduleDisplay({
   const handleMouseMove = (index: number) => {
     if (!isDragging || !dragStartBlock || !currentScheduleRef.current) return;
 
-    // Find the schedule's current boundaries
     let startBlock = dragStartBlock;
     let endBlock = index;
 
-    // Ensure start is before end
     if (startBlock > endBlock) {
       [startBlock, endBlock] = [endBlock, startBlock];
     }
 
-    // Minimum 1-hour duration (4 blocks)
     if (endBlock - startBlock < 4) {
       endBlock = startBlock + 4;
     }
@@ -65,16 +62,15 @@ export function ScheduleDisplay({
     }
   };
 
-  // Ensure the schedules and timeBlocks are valid
+  // Ensure schedules data is valid
   if (!Array.isArray(schedules) || schedules.length === 0) {
     return <div>No schedules available</div>;
   }
 
   return (
     <div className="overflow-auto">
-      {/* Render each schedule in its own row */}
       {schedules.map((schedule) => {
-        // Ensure timeBlocks is an array
+        // Check if timeBlocks exist and are an array
         if (!Array.isArray(schedule.timeBlocks) || schedule.timeBlocks.length === 0) {
           return (
             <div key={schedule.scheduleId} className="mb-4">
@@ -91,7 +87,7 @@ export function ScheduleDisplay({
             <div className="flex flex-row space-x-2">
               {schedule.timeBlocks.map((block, index) => {
                 const isStart = !schedule.timeBlocks[index - 1]?.hasSchedule && block.hasSchedule;
-                const isWholeHour = index % 4 === 0; // Check if block represents the start of an hour
+                const isWholeHour = index % 4 === 0;
 
                 return (
                   <div
@@ -110,7 +106,6 @@ export function ScheduleDisplay({
                       </div>
                     )}
 
-                    {/* Schedule block */}
                     {block.hasSchedule && block.scheduleId && (
                       <div className="absolute top-0 left-0 right-0 bg-blue-200 p-1 text-xs">
                         <div className="flex justify-between items-center">
