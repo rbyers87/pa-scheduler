@@ -178,17 +178,6 @@ export function DailySchedule({ date }: DailyScheduleProps) {
         </h3>
       </div>
       <div className="relative h-full overflow-auto">
-        {/* Time Labels Row */}
-        <div className="grid grid-cols-96 gap-1 text-xs font-medium mb-2">
-          {Array.from({ length: 24 }).map((_, hour) => (
-            <div
-              key={`hour-label-${hour}`}
-              className="col-span-4 text-center border-r last:border-r-0"
-            >
-              {hour}:00
-            </div>
-          ))}
-        </div>
         {/* Schedule Blocks */}
         <div className="grid grid-cols-96 gap-1">
           <ScheduleDisplay
