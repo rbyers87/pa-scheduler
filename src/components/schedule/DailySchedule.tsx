@@ -113,6 +113,46 @@ export function DailySchedule({ date }: DailyScheduleProps) {
     return <div className="p-4">Loading schedules...</div>;
   }
 
+  // Function to generate time blocks for the day
+  function generateTimeBlocks(schedules: any[], date: Date) {
+    const blocks: any[] = [];
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Create a list of all time blocks for the given day
+    for (let time = startOfDay.getTime(); time <= endOfDay.getTime(); time += 900000) { // 900000 ms = 15 minutes
+      const blockTime = new Date(time);
+      blocks.push({
+        time: format(blockTime, "HH:mm"),
+        hasSchedule: false,
+        scheduleId: "",
+        employeeName: "",
+      });
+    }
+
+    // Now, map the schedules to the time blocks
+    schedules.forEach((schedule) => {
+      const startTime = new Date(schedule.start_time);
+      const endTime = new Date(schedule.end_time);
+      const employeeName = `${schedule.employee.first_name} ${schedule.employee.last_name}`;
+
+      // Mark time blocks as having a schedule within the schedule's time range
+      blocks.forEach((block) => {
+        const blockTime = new Date(`${date.toISOString().split("T")[0]}T${block.time}:00`);
+        if (blockTime >= startTime && blockTime < endTime) {
+          block.hasSchedule = true;
+          block.scheduleId = schedule.id;
+          block.employeeName = employeeName;
+        }
+      });
+    });
+
+    return blocks;
+  }
+
   return (
     <Card className="p-4 h-[calc(100vh-100px)] overflow-hidden">
       <div className="mb-4">
