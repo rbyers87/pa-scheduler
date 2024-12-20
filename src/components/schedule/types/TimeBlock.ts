@@ -1,6 +1,6 @@
 export interface TimeBlock {
   id?: string;
-  time?: string;
+  time: string;
   start_time?: string;
   end_time?: string;
   hasSchedule?: boolean;
@@ -10,7 +10,7 @@ export interface TimeBlock {
     first_name: string;
     last_name: string;
   };
-  schedules?: Array<{
+  schedules: Array<{
     scheduleId: string;
     employeeName: string;
     start_time: string;

@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   session: any;
   user: any;
   accessToken: string | null;
   signOut: () => Promise<void>;
+  toast: ReturnType<typeof useToast>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -14,8 +17,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-
   const navigate = useNavigate();
+  const toast = useToast();
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -92,7 +95,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, accessToken, signOut }}>
+    <AuthContext.Provider value={{ session, user, accessToken, signOut, toast }}>
       {children}
     </AuthContext.Provider>
   );
