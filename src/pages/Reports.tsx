@@ -15,13 +15,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { Tables } from "@/integrations/supabase/types";
 
-interface Report {
-  id: string;
-  name: string;
-  created_at: string;
-  user_id: string;
-}
+type Report = Tables<'reports'>
 
 const Reports = () => {
   const { session } = useAuth();
