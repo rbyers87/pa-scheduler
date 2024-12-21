@@ -1,3 +1,14 @@
+/**
+ * Settings Page
+ * 
+ * Manages application settings and configurations.
+ * Features:
+ * - User preferences
+ * - District configurations
+ * - System settings
+ * - Access control settings
+ */
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";

@@ -1,3 +1,14 @@
+/**
+ * Time Off Page
+ * 
+ * Manages employee time off requests and approvals.
+ * Features:
+ * - Submit time off requests
+ * - View request status
+ * - Approve/deny requests (for supervisors/admins)
+ * - Track benefit balances
+ */
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";

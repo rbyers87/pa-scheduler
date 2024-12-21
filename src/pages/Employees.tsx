@@ -1,3 +1,15 @@
+/**
+ * Employees Page
+ * 
+ * Manages employee information and settings.
+ * Features:
+ * - View employee list
+ * - Add/edit employee details
+ * - Manage district preferences
+ * - Set badge numbers
+ * - Assign roles (admin/supervisor/employee)
+ */
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -151,3 +163,4 @@ const Employees = () => {
 };
 
 export default Employees;
+

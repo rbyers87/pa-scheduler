@@ -1,3 +1,14 @@
+/**
+ * Index/Dashboard Page
+ * 
+ * Main landing page after login.
+ * Features:
+ * - Overview of daily schedule
+ * - Quick access to key functions
+ * - Important notifications
+ * - Schedule summary
+ */
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Calendar, Clock, FileText } from "lucide-react";
 import { useEffect } from "react";

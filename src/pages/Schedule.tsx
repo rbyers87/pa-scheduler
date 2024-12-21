@@ -1,3 +1,15 @@
+/**
+ * Schedule Page
+ * 
+ * This page manages employee work schedules and district assignments.
+ * Features:
+ * - Daily, weekly, and monthly schedule views
+ * - District preference management
+ * - Automatic riding list generation
+ * - Manual schedule adjustments for supervisors/admins
+ * - Schedule export functionality
+ */
+
 import { Card, CardContent } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -81,3 +93,4 @@ const Schedule = () => {
 };
 
 export default Schedule;
+
