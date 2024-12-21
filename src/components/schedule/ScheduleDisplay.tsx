@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ScheduleData } from "./types/TimeBlock";
 
 interface ScheduleDisplayProps {
   timeBlocks: Array<{
@@ -14,7 +15,7 @@ interface ScheduleDisplayProps {
     }>;
   }>;
   onDelete: (scheduleId: string) => void;
-  onScheduleUpdate: () => void;
+  onScheduleUpdate: (data: Partial<ScheduleData>) => Promise<void>;
   onScheduleResize?: (scheduleId: string, startBlock: number, endBlock: number) => void;
 }
 
@@ -57,7 +58,7 @@ export function ScheduleDisplay({
   const handleMouseUp = () => {
     if (resizing) {
       setResizing(null);
-      onScheduleUpdate();
+      onScheduleUpdate({}); // Call with an empty object or appropriate data
     }
   };
 
