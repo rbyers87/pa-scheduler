@@ -1,71 +1,84 @@
-/**
- * Login Page
- * 
- * Handles user authentication and access control.
- * Features:
- * - User login
- * - Password reset
- * - Session management
- * - Role-based access control
- */
-
-import { useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Login: Checking session", session);
+      if (session) {
+        console.log("Login: User already logged in, redirecting to home");
+        navigate("/");
+      }
+    };
+    checkSession();
+  }, [navigate]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
     try {
+      console.log("Login: Attempting login");
       await login(email, password);
-      navigate("/"); // Redirect to the main page after login
+      console.log("Login: Login successful");
+      navigate("/");
     } catch (err) {
-      setError("Failed to log in. Please check your credentials.");
+      console.error("Login: Login failed", err);
+      // The error will be handled by the toast in the AuthContext
     }
   };
 
   return (
-    <Card>
-      <CardContent>
-        <h2 className="text-2xl font-bold">Login</h2>
-        {error && <p className="text-red-500">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md">
+        <CardContent className="pt-6">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold">Login</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Enter your credentials to access your account
+            </p>
           </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <Button type="submit">Login</Button>
-        </form>
-      </CardContent>
-    </Card>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-1">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                required
+                className="block w-full"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
+                className="block w-full"
+              />
+            </div>
+            <Button type="submit" className="w-full">
+              Login
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

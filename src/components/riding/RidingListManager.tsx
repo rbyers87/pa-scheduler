@@ -67,6 +67,16 @@ export function RidingListManager() {
     });
   };
 
+  if (!session) {
+    return (
+      <Alert>
+        <AlertDescription>
+          Please log in to view the riding list.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (error) {
     return (
       <Alert variant="destructive">
