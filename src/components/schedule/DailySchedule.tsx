@@ -6,6 +6,7 @@ import { useScheduleOperations } from "./hooks/useScheduleOperations";
 import { useScheduleQuery } from "./hooks/useScheduleQuery";
 import { generateTimeBlocks } from "./utils/scheduleUtils";
 import { ScheduleData } from "./types/TimeBlock";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DailyScheduleProps {
   date: Date;
