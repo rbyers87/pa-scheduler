@@ -31,7 +31,6 @@ export function DailySchedule({ date }: DailyScheduleProps) {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      // Get regular schedules
       const { data: regularSchedules, error: regularError } = await supabase
         .from("schedules")
         .select(`
@@ -51,7 +50,6 @@ export function DailySchedule({ date }: DailyScheduleProps) {
         throw regularError;
       }
 
-      // Get recurring schedules
       const { data: recurringSchedules, error: recurringError } = await supabase
         .from("recurring_schedules")
         .select(`
@@ -112,6 +110,31 @@ export function DailySchedule({ date }: DailyScheduleProps) {
     enabled: !!session?.user?.id,
   });
 
+  const handleRecurringUpdate = async (data: Partial<ScheduleData>) => {
+    try {
+      const { error } = await supabase
+        .from("recurring_schedules")
+        .update(data)
+        .eq("id", data.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Recurring schedule updated successfully",
+      });
+
+      refetch(); // Refresh schedules after update
+    } catch (error) {
+      console.error("Error updating recurring schedule:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update recurring schedule",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (error) {
     return <div className="p-4 text-red-500">Error loading schedules: {error.message}</div>;
   }
@@ -120,8 +143,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
     return <div className="p-4">Loading schedules...</div>;
   }
 
-  // Function to generate time blocks for the day
-  function generateTimeBlocks(schedules: ScheduleData[], date: Date): TimeBlock[] {
+  const generateTimeBlocks = (schedules: ScheduleData[], date: Date): TimeBlock[] => {
     const blocks: TimeBlock[] = [];
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
@@ -129,7 +151,6 @@ export function DailySchedule({ date }: DailyScheduleProps) {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Create a list of all time blocks for the given day (15-minute intervals)
     for (let time = startOfDay.getTime(); time <= endOfDay.getTime(); time += 900000) {
       const blockTime = new Date(time);
       blocks.push({
@@ -138,10 +159,9 @@ export function DailySchedule({ date }: DailyScheduleProps) {
       });
     }
 
-    // Now, map the schedules to the time blocks
     schedules.forEach((schedule) => {
       if (!schedule.start_time || !schedule.end_time || !schedule.employee) return;
-      
+
       const startTime = new Date(schedule.start_time);
       const endTime = new Date(schedule.end_time);
       const employeeName = `${schedule.employee.first_name} ${schedule.employee.last_name}`;
@@ -161,15 +181,15 @@ export function DailySchedule({ date }: DailyScheduleProps) {
     });
 
     return blocks;
-  }
+  };
 
   const handleScheduleResize = (scheduleId: string, startBlock: number, endBlock: number) => {
     const startTime = new Date(date);
     startTime.setHours(Math.floor(startBlock / 4), (startBlock % 4) * 15, 0);
-    
+
     const endTime = new Date(date);
     endTime.setHours(Math.floor(endBlock / 4), (endBlock % 4) * 15, 0);
-    
+
     handleUpdateSchedule(scheduleId, startTime, endTime);
   };
 
@@ -184,7 +204,7 @@ export function DailySchedule({ date }: DailyScheduleProps) {
         <ScheduleDisplay
           timeBlocks={generateTimeBlocks(schedules || [], date)}
           onDelete={handleDeleteSchedule}
-          onScheduleUpdate={refetch}
+          onScheduleUpdate={handleRecurringUpdate}
           onScheduleResize={handleScheduleResize}
         />
       </div>
