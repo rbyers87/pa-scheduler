@@ -13,13 +13,21 @@ export function RidingListManager() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
-  const { session } = useAuth();
+  const { session, accessToken } = useAuth();
 
   const { data: ridingList, refetch, error } = useQuery({
-    queryKey: ["riding-list", selectedDate],
+    queryKey: ["riding-list", selectedDate, session?.user?.id],
     queryFn: async () => {
-      console.log("Fetching riding list for date:", format(selectedDate, "yyyy-MM-dd"));
-      console.log("Current session:", session?.user?.id);
+      if (!session?.user?.id || !accessToken) {
+        console.log("RidingListManager: No valid session");
+        throw new Error("Authentication required");
+      }
+
+      console.log("RidingListManager: Fetching riding list", {
+        date: format(selectedDate, "yyyy-MM-dd"),
+        userId: session.user.id,
+        role: session.user.user_metadata?.role
+      });
       
       const { data, error } = await supabase
         .from("riding_lists")
@@ -41,20 +49,21 @@ export function RidingListManager() {
         throw error;
       }
 
-      console.log("Fetched riding list data:", data);
+      console.log("RidingListManager: Fetched riding list data:", data);
       return data;
     },
-    enabled: !!session?.user?.id, // Only run query if user is authenticated
+    meta: {
+      onError: (error: Error) => {
+        console.error("Query error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch riding list. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+    enabled: !!session?.user?.id && !!accessToken,
   });
-
-  if (error) {
-    console.error("Query error:", error);
-    toast({
-      title: "Error",
-      description: "Failed to fetch riding list. Please try again.",
-      variant: "destructive",
-    });
-  }
 
   const handleListCreated = () => {
     setIsCreating(false);
