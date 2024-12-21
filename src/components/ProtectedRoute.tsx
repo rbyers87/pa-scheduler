@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, accessToken } = useAuth();
@@ -20,7 +21,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         replace: true,
         state: { from: location.pathname },
       });
-      return;
     }
   }, [session, accessToken, navigate, location]);
 
@@ -28,7 +28,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     console.log("ProtectedRoute: Loading or no session");
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
