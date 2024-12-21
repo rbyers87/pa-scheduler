@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShiftSelector } from "./ShiftSelector";
@@ -11,14 +11,40 @@ import { DaysSelect } from "./DaysSelect";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-export function RecurringScheduleForm() {
+interface RecurringScheduleFormProps {
+  existingSchedule?: {
+    id: string;
+    employee_id: string;
+    shift_id: string;
+    days: number[];
+    begin_date: string;
+    end_date: string | null;
+  };
+  onSuccess?: () => void;
+}
+
+export function RecurringScheduleForm({
+  existingSchedule,
+  onSuccess,
+}: RecurringScheduleFormProps) {
   const [selectedShift, setSelectedShift] = useState<string>();
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>();
-  const [beginDate, setBeginDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [beginDate, setBeginDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [endDate, setEndDate] = useState<string>();
   const { toast } = useToast();
   const { user, session } = useAuth();
+
+  // Load existing schedule data into the form
+  useEffect(() => {
+    if (existingSchedule) {
+      setSelectedShift(existingSchedule.shift_id);
+      setSelectedDays(existingSchedule.days);
+      setSelectedEmployee(existingSchedule.employee_id);
+      setBeginDate(existingSchedule.begin_date);
+      setEndDate(existingSchedule.end_date || "");
+    }
+  }, [existingSchedule]);
 
   // Fetching user profile
   const { data: userProfile } = useQuery({
@@ -45,7 +71,7 @@ export function RecurringScheduleForm() {
     if (!userProfile || !["admin", "supervisor"].includes(userProfile.role)) {
       toast({
         title: "Permission Denied",
-        description: "Only administrators and supervisors can create recurring schedules",
+        description: "Only administrators and supervisors can manage recurring schedules",
         variant: "destructive",
       });
       return;
@@ -62,42 +88,60 @@ export function RecurringScheduleForm() {
     }
 
     try {
-      console.log("Creating recurring schedule:", {
-        employee_id: selectedEmployee,
-        shift_id: selectedShift,
-        days: selectedDays,
-        begin_date: beginDate,
-        end_date: endDate || null,
-      });
+      if (existingSchedule) {
+        // Update existing schedule
+        const { error } = await supabase
+          .from("recurring_schedules")
+          .update({
+            employee_id: selectedEmployee,
+            shift_id: selectedShift,
+            days: selectedDays,
+            begin_date: beginDate,
+            end_date: endDate || null,
+          })
+          .eq("id", existingSchedule.id);
 
-      const { error } = await supabase
-        .from("recurring_schedules")
-        .insert({
-          employee_id: selectedEmployee,
-          shift_id: selectedShift,
-          days: selectedDays,
-          begin_date: beginDate,
-          end_date: endDate || null,
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Recurring schedule updated successfully",
         });
+      } else {
+        // Create new schedule
+        const { error } = await supabase
+          .from("recurring_schedules")
+          .insert({
+            employee_id: selectedEmployee,
+            shift_id: selectedShift,
+            days: selectedDays,
+            begin_date: beginDate,
+            end_date: endDate || null,
+          });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Recurring schedule created successfully",
-      });
+        toast({
+          title: "Success",
+          description: "Recurring schedule created successfully",
+        });
+      }
 
-      // Reset form
-      setSelectedShift(undefined);
-      setSelectedDays([]);
-      setSelectedEmployee(undefined);
-      setBeginDate(new Date().toISOString().split('T')[0]);
-      setEndDate(undefined);
+      // Reset form if creating a new schedule
+      if (!existingSchedule) {
+        setSelectedShift(undefined);
+        setSelectedDays([]);
+        setSelectedEmployee(undefined);
+        setBeginDate(new Date().toISOString().split("T")[0]);
+        setEndDate(undefined);
+      }
+
+      if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Error creating recurring schedule:", error);
+      console.error("Error managing recurring schedule:", error);
       toast({
         title: "Error",
-        description: "Failed to create recurring schedule",
+        description: "Failed to manage recurring schedule",
         variant: "destructive",
       });
     }
@@ -112,7 +156,7 @@ export function RecurringScheduleForm() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            You do not have permission to create recurring schedules. Please contact an administrator.
+            You do not have permission to manage recurring schedules. Please contact an administrator.
           </p>
         </CardContent>
       </Card>
@@ -122,7 +166,7 @@ export function RecurringScheduleForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Set Recurring Schedule</CardTitle>
+        <CardTitle>{existingSchedule ? "Edit Recurring Schedule" : "Set Recurring Schedule"}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -150,7 +194,7 @@ export function RecurringScheduleForm() {
               type="date"
               value={beginDate}
               onChange={(e) => setBeginDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
+              min={new Date().toISOString().split("T")[0]}
             />
           </div>
 
@@ -164,7 +208,9 @@ export function RecurringScheduleForm() {
             />
           </div>
 
-          <Button type="submit">Create Recurring Schedule</Button>
+          <Button type="submit">
+            {existingSchedule ? "Update Recurring Schedule" : "Create Recurring Schedule"}
+          </Button>
         </form>
       </CardContent>
     </Card>
