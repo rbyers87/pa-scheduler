@@ -8,23 +8,26 @@ import { useToast } from "@/hooks/use-toast";
 import { RidingListView } from "./RidingListView";
 import { CreateRidingList } from "./CreateRidingList";
 import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
 export function RidingListManager() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
-  const { session, accessToken } = useAuth();
+  const { session } = useAuth();
 
-  const { data: ridingList, refetch, error } = useQuery({
+  const { data: ridingList, refetch, error, isLoading } = useQuery({
     queryKey: ["riding-list", selectedDate, session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id || !accessToken) {
+      if (!session?.user?.id) {
         console.log("RidingListManager: No valid session");
         throw new Error("Authentication required");
       }
 
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
       console.log("RidingListManager: Fetching riding list", {
-        date: format(selectedDate, "yyyy-MM-dd"),
+        date: formattedDate,
         userId: session.user.id,
         role: session.user.user_metadata?.role
       });
@@ -41,7 +44,7 @@ export function RidingListManager() {
             last_name
           )
         `)
-        .eq("date", format(selectedDate, "yyyy-MM-dd"))
+        .eq("date", formattedDate)
         .order("position");
 
       if (error) {
@@ -52,17 +55,7 @@ export function RidingListManager() {
       console.log("RidingListManager: Fetched riding list data:", data);
       return data;
     },
-    meta: {
-      onError: (error: Error) => {
-        console.error("Query error:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch riding list. Please try again.",
-          variant: "destructive",
-        });
-      }
-    },
-    enabled: !!session?.user?.id && !!accessToken,
+    enabled: !!session?.user?.id,
   });
 
   const handleListCreated = () => {
@@ -73,6 +66,24 @@ export function RidingListManager() {
       description: "Riding list has been created.",
     });
   };
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>
+          Error loading riding list: {error.message}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <Card>
