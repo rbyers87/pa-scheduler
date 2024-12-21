@@ -190,6 +190,44 @@ export type Database = {
           },
         ]
       }
+      riding_lists: {
+        Row: {
+          created_at: string
+          date: string
+          employee_id: string
+          id: string
+          position: number
+          status: Database["public"]["Enums"]["rider_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          employee_id: string
+          id?: string
+          position: number
+          status?: Database["public"]["Enums"]["rider_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          employee_id?: string
+          id?: string
+          position?: number
+          status?: Database["public"]["Enums"]["rider_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "riding_lists_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedules: {
         Row: {
           created_at: string
@@ -307,6 +345,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      rider_status: "active" | "standby" | "off"
       shift_type: "day" | "evening" | "night"
       user_role: "admin" | "supervisor" | "employee"
     }
