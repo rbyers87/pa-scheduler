@@ -26,6 +26,7 @@ export function CreateRidingList({ date, onSuccess, onCancel }: CreateRidingList
   const { data: schedules } = useQuery({
     queryKey: ["schedules", date],
     queryFn: async () => {
+      console.log("Fetching schedules for date:", format(date, "yyyy-MM-dd"));
       const { data, error } = await supabase
         .from("schedules")
         .select(`
@@ -38,7 +39,11 @@ export function CreateRidingList({ date, onSuccess, onCancel }: CreateRidingList
         `)
         .eq("start_time::date", format(date, "yyyy-MM-dd"));
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching schedules:", error);
+        throw error;
+      }
+
       return data;
     },
   });
@@ -53,20 +58,28 @@ export function CreateRidingList({ date, onSuccess, onCancel }: CreateRidingList
 
   const handleCreate = async () => {
     try {
+      const formattedDate = format(date, "yyyy-MM-dd");
       const ridingListData = selectedEmployees.map((employeeId, index) => ({
-        date: format(date, "yyyy-MM-dd"),
+        date: formattedDate,
         employee_id: employeeId,
         position: index + 1,
-        status: 'active' as const, // Explicitly type as rider_status
+        status: "active" as const,
       }));
 
       const { error } = await supabase
         .from("riding_lists")
         .insert(ridingListData);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating riding list:", error);
+        throw error;
+      }
 
       onSuccess();
+      toast({
+        title: "Success",
+        description: "Riding list has been created.",
+      });
     } catch (error) {
       console.error("Error creating riding list:", error);
       toast({

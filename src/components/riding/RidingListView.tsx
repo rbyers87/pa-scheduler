@@ -39,18 +39,21 @@ export function RidingListView({ ridingList, onUpdate, date }: RidingListViewPro
     if (!currentEmployee || !swapEmployee) return;
 
     try {
+      const formattedDate = date.toISOString().split('T')[0];
       const updates = [
         {
           id: currentEmployee.id,
           position: newPosition,
-          date: date.toISOString().split('T')[0],
+          date: formattedDate,
           employee_id: currentEmployee.employee.id,
+          status: currentEmployee.status,
         },
         {
           id: swapEmployee.id,
           position: currentPosition,
-          date: date.toISOString().split('T')[0],
+          date: formattedDate,
           employee_id: swapEmployee.employee.id,
+          status: swapEmployee.status,
         },
       ];
 
