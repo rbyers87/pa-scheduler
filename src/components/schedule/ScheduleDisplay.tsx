@@ -25,73 +25,128 @@ export function ScheduleDisplay({
   onScheduleResize,
 }: ScheduleDisplayProps) {
   const { toast } = useToast();
+  const [resizing, setResizing] = useState<{
+    scheduleId: string;
+    type: 'start' | 'end';
+    initialBlock: number;
+  } | null>(null);
 
-  // Ensure the time blocks are not empty and the component renders
+  // Calculate the block index for a given time
+  const getBlockIndex = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 4 + Math.floor(minutes / 15);
+  };
+
+  // Handle mouse move during resize
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!resizing || !onScheduleResize) return;
+
+    const timelineRect = e.currentTarget.getBoundingClientRect();
+    const relativeX = e.clientX - timelineRect.left;
+    const blockWidth = 30; // Width of each time block
+    const newBlock = Math.floor(relativeX / blockWidth);
+
+    if (resizing.type === 'start') {
+      onScheduleResize(resizing.scheduleId, newBlock, resizing.initialBlock);
+    } else {
+      onScheduleResize(resizing.scheduleId, resizing.initialBlock, newBlock);
+    }
+  };
+
+  // Handle mouse up to end resizing
+  const handleMouseUp = () => {
+    if (resizing) {
+      setResizing(null);
+      onScheduleUpdate();
+    }
+  };
+
   if (!timeBlocks || timeBlocks.length === 0) {
     return <div>No schedules available for this day</div>;
   }
 
   return (
-    <div className="overflow-auto">
-      <div className="flex flex-row space-x-2">
-        {timeBlocks.map((block, index) => {
-          const isWholeHour = index % 4 === 0; // Check if block represents the start of an hour
+    <div 
+      className="overflow-auto relative"
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+    >
+      <div className="flex flex-row">
+        {/* Time labels column */}
+        <div className="sticky left-0 z-10 bg-white">
+          {timeBlocks.map((block, index) => (
+            index % 4 === 0 && (
+              <div key={`label-${block.time}`} className="h-20 flex items-center pr-2 font-medium">
+                {block.time}
+              </div>
+            )
+          ))}
+        </div>
 
-          return (
+        {/* Schedule grid */}
+        <div className="flex flex-row flex-1">
+          {timeBlocks.map((block, index) => (
             <div
               key={block.time}
-              className="relative flex flex-col min-w-[30px] h-20 border-r border-gray-200"
+              className="relative flex-shrink-0 w-[30px] h-20 border-r border-gray-200"
             >
-              {/* Time Label */}
-              {isWholeHour && (
-                <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-500 font-semibold">
-                  {block.time}
-                </div>
-              )}
-
-              {/* Schedule Blocks */}
-              {block.schedules.length > 0 &&
-                block.schedules.map((schedule, scheduleIndex) => {
-                  const scheduleDuration =
-                    (new Date(schedule.end_time).getTime() - new Date(schedule.start_time).getTime()) / 60000; // Calculate duration in minutes
-
-                  const scheduleHeight = `${scheduleDuration / 15}rem`; // Set height in rem based on 15-min intervals
-                  const scheduleTop = `${((new Date(schedule.start_time).getMinutes() % 60) / 15) * 2}rem`; // Set the top position based on the start time
-
-                  // Ensure each schedule within the same block has some space between them
-                  const scheduleLeft = `${(scheduleIndex % 3) * 35}px`; // Limit the maximum number of schedules that can appear side by side
-                  const scheduleZIndex = scheduleIndex; // Increase z-index for stacked schedules
-
+              {block.schedules.map((schedule, scheduleIndex) => {
+                const startBlock = getBlockIndex(new Date(schedule.start_time).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }));
+                const endBlock = getBlockIndex(new Date(schedule.end_time).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }));
+                const width = (endBlock - startBlock) * 30;
+                
+                if (index === startBlock) {
                   return (
                     <div
                       key={schedule.scheduleId}
-                      className="absolute flex flex-col space-y-1"
+                      className="absolute z-10"
                       style={{
-                        top: scheduleTop,
-                        height: scheduleHeight,
-                        left: scheduleLeft,
-                        zIndex: scheduleZIndex,
+                        width: `${width}px`,
+                        top: `${scheduleIndex * 25}px`,
                       }}
                     >
-                      <div className="bg-blue-200 p-1 text-xs">
-                        <div className="flex justify-between items-center">
-                          <span>{schedule.employeeName}</span>
+                      <div className="bg-blue-200 p-1 rounded-md border border-blue-300 relative group">
+                        {/* Resize handle - start */}
+                        <div
+                          className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-400"
+                          onMouseDown={() => setResizing({ 
+                            scheduleId: schedule.scheduleId, 
+                            type: 'start',
+                            initialBlock: endBlock 
+                          })}
+                        />
+                        
+                        <div className="flex justify-between items-center min-w-[100px]">
+                          <span className="text-xs truncate">{schedule.employeeName}</span>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100"
                             onClick={() => onDelete(schedule.scheduleId)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
+
+                        {/* Resize handle - end */}
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-400"
+                          onMouseDown={() => setResizing({ 
+                            scheduleId: schedule.scheduleId, 
+                            type: 'end',
+                            initialBlock: startBlock 
+                          })}
+                        />
                       </div>
                     </div>
                   );
-                })}
+                }
+                return null;
+              })}
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </div>
   );
