@@ -37,18 +37,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(initialSession.user);
           setAccessToken(initialSession.access_token);
         } else {
-          console.log("No initial session found, redirecting to login");
+          console.log("No initial session found");
           setSession(null);
           setUser(null);
           setAccessToken(null);
-          navigate("/login");
         }
       } catch (error) {
         console.error("Error in initializeAuth:", error);
         setSession(null);
         setUser(null);
         setAccessToken(null);
-        navigate("/login");
       }
     };
 
