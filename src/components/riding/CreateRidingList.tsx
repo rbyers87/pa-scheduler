@@ -57,7 +57,7 @@ export function CreateRidingList({ date, onSuccess, onCancel }: CreateRidingList
         date: format(date, "yyyy-MM-dd"),
         employee_id: employeeId,
         position: index + 1,
-        status: "active",
+        status: 'active' as const, // Explicitly type as rider_status
       }));
 
       const { error } = await supabase

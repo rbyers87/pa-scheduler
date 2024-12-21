@@ -10,13 +10,14 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown } from "lucide-react";
-import { format } from "date-fns";
+
+type RiderStatus = 'active' | 'standby' | 'off';
 
 interface RidingListViewProps {
   ridingList: Array<{
     id: string;
     position: number;
-    status: string;
+    status: RiderStatus;
     employee: {
       id: string;
       first_name: string;
@@ -42,10 +43,14 @@ export function RidingListView({ ridingList, onUpdate, date }: RidingListViewPro
         {
           id: currentEmployee.id,
           position: newPosition,
+          date: date.toISOString().split('T')[0],
+          employee_id: currentEmployee.employee.id,
         },
         {
           id: swapEmployee.id,
           position: currentPosition,
+          date: date.toISOString().split('T')[0],
+          employee_id: swapEmployee.employee.id,
         },
       ];
 
@@ -66,7 +71,7 @@ export function RidingListView({ ridingList, onUpdate, date }: RidingListViewPro
     }
   };
 
-  const handleUpdateStatus = async (id: string, newStatus: string) => {
+  const handleUpdateStatus = async (id: string, newStatus: RiderStatus) => {
     try {
       const { error } = await supabase
         .from("riding_lists")
@@ -114,7 +119,7 @@ export function RidingListView({ ridingList, onUpdate, date }: RidingListViewPro
             <TableCell>
               <select
                 value={item.status}
-                onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
+                onChange={(e) => handleUpdateStatus(item.id, e.target.value as RiderStatus)}
                 className="border rounded p-1"
               >
                 <option value="active">Active</option>
