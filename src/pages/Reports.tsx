@@ -16,19 +16,26 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 
+interface Report {
+  id: string;
+  name: string;
+  created_at: string;
+  user_id: string;
+}
+
 const Reports = () => {
   const { session } = useAuth();
   const { toast } = useToast();
-  const [reports, setReports] = useState([]);
+  const [reports, setReports] = useState<Report[]>([]);
 
   useEffect(() => {
     const fetchReports = async () => {
-      if (!session) return;
+      if (!session?.user?.id) return;
 
       const { data, error } = await supabase
-        .from("reports")
-        .select("*")
-        .eq("user_id", session.user.id);
+        .from('reports')
+        .select('*')
+        .eq('user_id', session.user.id);
 
       if (error) {
         console.error("Error fetching reports:", error);
@@ -38,7 +45,7 @@ const Reports = () => {
           variant: "destructive",
         });
       } else {
-        setReports(data);
+        setReports(data || []);
       }
     };
 

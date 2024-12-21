@@ -8,6 +8,7 @@ interface AuthContextType {
   user: any;
   accessToken: string | null;
   signOut: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   toast: ReturnType<typeof useToast>;
 }
 
@@ -86,6 +87,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [navigate]);
 
+  const login = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error("Login error:", error.message);
+      throw error;
+    }
+
+    setSession(data.session);
+    setUser(data.user);
+    setAccessToken(data.session?.access_token || null);
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setSession(null);
@@ -95,7 +112,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, accessToken, signOut, toast }}>
+    <AuthContext.Provider value={{ session, user, accessToken, signOut, login, toast }}>
       {children}
     </AuthContext.Provider>
   );
