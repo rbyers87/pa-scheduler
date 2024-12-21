@@ -17,7 +17,9 @@ export default function Login() {
     if (session?.user?.id) {
       const from = location.state?.from || "/";
       console.log("Login: User already authenticated, redirecting to", from);
-      navigate(from, { replace: true });
+      // Remove any potential malformed URL parts
+      const cleanPath = from.replace(/:\/$/, "").replace(/^\/+/, "/");
+      navigate(cleanPath, { replace: true });
     } else {
       setIsChecking(false);
     }
