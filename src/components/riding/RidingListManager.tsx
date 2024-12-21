@@ -7,16 +7,20 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { RidingListView } from "./RidingListView";
 import { CreateRidingList } from "./CreateRidingList";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function RidingListManager() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
+  const { session } = useAuth();
 
-  const { data: ridingList, refetch } = useQuery({
+  const { data: ridingList, refetch, error } = useQuery({
     queryKey: ["riding-list", selectedDate],
     queryFn: async () => {
-      console.log("Fetching riding list for date:", selectedDate);
+      console.log("Fetching riding list for date:", format(selectedDate, "yyyy-MM-dd"));
+      console.log("Current session:", session?.user?.id);
+      
       const { data, error } = await supabase
         .from("riding_lists")
         .select(`
@@ -37,9 +41,20 @@ export function RidingListManager() {
         throw error;
       }
 
+      console.log("Fetched riding list data:", data);
       return data;
     },
+    enabled: !!session?.user?.id, // Only run query if user is authenticated
   });
+
+  if (error) {
+    console.error("Query error:", error);
+    toast({
+      title: "Error",
+      description: "Failed to fetch riding list. Please try again.",
+      variant: "destructive",
+    });
+  }
 
   const handleListCreated = () => {
     setIsCreating(false);
