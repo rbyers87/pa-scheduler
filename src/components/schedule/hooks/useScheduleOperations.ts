@@ -16,28 +16,38 @@ export function useScheduleOperations() {
       return;
     }
 
-    // Check if this is a recurring schedule
-    if (scheduleId.includes('-')) {
-      toast({
-        title: "Cannot delete recurring schedule",
-        description: "Recurring schedules must be modified through the recurring schedule form.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      const { error } = await supabase
-        .from("schedules")
-        .delete()
-        .eq("id", scheduleId);
+      // Check if this is a recurring schedule by looking for the pattern id-date
+      const isRecurring = scheduleId.includes('-');
+      
+      if (isRecurring) {
+        // Extract the recurring schedule ID from the composite ID (format: recurringId-date)
+        const recurringId = scheduleId.split('-')[0];
+        
+        const { error } = await supabase
+          .from("recurring_schedules")
+          .delete()
+          .eq("id", recurringId);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Schedule deleted",
-        description: "The schedule has been removed successfully.",
-      });
+        toast({
+          title: "Recurring schedule deleted",
+          description: "The recurring schedule has been removed successfully.",
+        });
+      } else {
+        const { error } = await supabase
+          .from("schedules")
+          .delete()
+          .eq("id", scheduleId);
+
+        if (error) throw error;
+
+        toast({
+          title: "Schedule deleted",
+          description: "The schedule has been removed successfully.",
+        });
+      }
     } catch (error) {
       console.error("Error deleting schedule:", error);
       toast({
@@ -59,7 +69,9 @@ export function useScheduleOperations() {
     }
 
     // Check if this is a recurring schedule
-    if (scheduleId.includes('-')) {
+    const isRecurring = scheduleId.includes('-');
+    
+    if (isRecurring) {
       toast({
         title: "Cannot modify recurring schedule",
         description: "Recurring schedules must be modified through the recurring schedule form.",
