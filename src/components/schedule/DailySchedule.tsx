@@ -7,13 +7,17 @@ import { useScheduleQuery } from "./hooks/useScheduleQuery";
 import { generateTimeBlocks } from "./utils/scheduleUtils";
 import { ScheduleData } from "./types/TimeBlock";
 import { supabase } from "@/integrations/supabase/client";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface DailyScheduleProps {
   date: Date;
 }
 
-export function DailySchedule({ date }: DailyScheduleProps) {
+export function DailySchedule({ date: initialDate }: DailyScheduleProps) {
   const { session } = useAuth();
+  const [date, setDate] = React.useState<Date>(initialDate);
   const { handleDeleteSchedule, handleUpdateSchedule } = useScheduleOperations();
   const { data: schedules, refetch, isLoading, error } = useScheduleQuery(date, session?.user?.id);
 
@@ -42,6 +46,18 @@ export function DailySchedule({ date }: DailyScheduleProps) {
     }
   };
 
+  const handlePreviousDay = () => {
+    const newDate = new Date(date);
+    newDate.setDate(date.getDate() - 1);
+    setDate(newDate);
+  };
+
+  const handleNextDay = () => {
+    const newDate = new Date(date);
+    newDate.setDate(date.getDate() + 1);
+    setDate(newDate);
+  };
+
   if (error) {
     return <div className="p-4 text-red-500">Error loading schedules: {error.message}</div>;
   }
@@ -52,10 +68,26 @@ export function DailySchedule({ date }: DailyScheduleProps) {
 
   return (
     <Card className="p-4 h-[calc(100vh-100px)] overflow-hidden">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-center sm:text-left">
-          {format(date, "EEEE, MMMM d, yyyy")}
-        </h3>
+      <div className="mb-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <Button variant="outline" size="icon" onClick={handlePreviousDay}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h3 className="text-lg font-semibold text-center">
+            {format(date, "EEEE, MMMM d, yyyy")}
+          </h3>
+          <Button variant="outline" size="icon" onClick={handleNextDay}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex justify-center">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={(newDate) => newDate && setDate(newDate)}
+            className="rounded-md border"
+          />
+        </div>
       </div>
       <div className="relative h-full overflow-auto">
         <ScheduleDisplay
