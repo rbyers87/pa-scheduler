@@ -1,3 +1,4 @@
+import React from "react";
 import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
