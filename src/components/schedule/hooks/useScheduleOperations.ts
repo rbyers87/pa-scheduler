@@ -17,16 +17,22 @@ export function useScheduleOperations() {
     }
 
     try {
-      // Check if this is a recurring schedule by looking for the date part
+      // Check if this is a recurring schedule by looking for the UUID-date pattern
+      // Format should be: "uuid-YYYY-MM-DD"
       const isRecurring = scheduleId.includes('-');
       
       if (isRecurring) {
-        // Extract the recurring schedule ID from the composite ID (format: recurringId-YYYY-MM-DD)
-        // We need to get everything before the last dash to preserve the full UUID
-        const lastDashIndex = scheduleId.lastIndexOf('-');
-        const recurringId = scheduleId.substring(0, lastDashIndex);
+        // The recurring ID is the full UUID part before the date
+        // Example: "123e4567-e89b-12d3-a456-426614174000-2024-01-01"
+        const matches = scheduleId.match(/^([0-9a-f-]+)-\d{4}-\d{2}-\d{2}$/i);
         
-        console.log("Deleting recurring schedule with ID:", recurringId);
+        if (!matches || !matches[1]) {
+          console.error("Invalid recurring schedule ID format:", scheduleId);
+          throw new Error("Invalid recurring schedule ID format");
+        }
+
+        const recurringId = matches[1];
+        console.log("Attempting to delete recurring schedule with ID:", recurringId);
         
         const { error } = await supabase
           .from("recurring_schedules")
@@ -43,7 +49,7 @@ export function useScheduleOperations() {
           description: "The recurring schedule has been removed successfully.",
         });
       } else {
-        console.log("Deleting regular schedule with ID:", scheduleId);
+        console.log("Attempting to delete regular schedule with ID:", scheduleId);
         
         const { error } = await supabase
           .from("schedules")
