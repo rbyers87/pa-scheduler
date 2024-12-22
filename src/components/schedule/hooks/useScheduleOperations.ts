@@ -18,26 +18,24 @@ export function useScheduleOperations() {
 
     try {
       // Check if this is a recurring schedule by looking for the UUID-date pattern
-      // Format should be: "uuid-YYYY-MM-DD"
       const isRecurring = scheduleId.includes('-');
       
       if (isRecurring) {
-        // The recurring ID is the full UUID part before the date
-        // Example: "123e4567-e89b-12d3-a456-426614174000-2024-01-01"
-        const matches = scheduleId.match(/^([0-9a-f-]+)-\d{4}-\d{2}-\d{2}$/i);
+        // Extract just the UUID part (everything before the date)
+        // The format is: UUID-DATE where UUID is already hyphenated
+        const uuidPart = scheduleId.split('-2024-')[0]; // Split on the year part
         
-        if (!matches || !matches[1]) {
+        if (!uuidPart || uuidPart.length !== 36) { // UUID should be exactly 36 characters
           console.error("Invalid recurring schedule ID format:", scheduleId);
           throw new Error("Invalid recurring schedule ID format");
         }
 
-        const recurringId = matches[1];
-        console.log("Attempting to delete recurring schedule with ID:", recurringId);
+        console.log("Attempting to delete recurring schedule with ID:", uuidPart);
         
         const { error } = await supabase
           .from("recurring_schedules")
           .delete()
-          .eq("id", recurringId);
+          .eq("id", uuidPart);
 
         if (error) {
           console.error("Error deleting recurring schedule:", error);
