@@ -32,19 +32,17 @@ export function ScheduleDisplay({
     initialBlock: number;
   } | null>(null);
 
-  // Calculate the block index for a given time
   const getBlockIndex = (time: string) => {
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 4 + Math.floor(minutes / 15);
   };
 
-  // Handle mouse move during resize
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!resizing || !onScheduleResize) return;
 
     const timelineRect = e.currentTarget.getBoundingClientRect();
     const relativeX = e.clientX - timelineRect.left;
-    const blockWidth = 30; // Width of each time block
+    const blockWidth = 60; // Increased block width
     const newBlock = Math.floor(relativeX / blockWidth);
 
     if (resizing.type === 'start') {
@@ -54,11 +52,10 @@ export function ScheduleDisplay({
     }
   };
 
-  // Handle mouse up to end resizing
   const handleMouseUp = () => {
     if (resizing) {
       setResizing(null);
-      onScheduleUpdate({}); // Call with an empty object or appropriate data
+      onScheduleUpdate({});
     }
   };
 
@@ -75,10 +72,13 @@ export function ScheduleDisplay({
     >
       <div className="flex flex-row">
         {/* Time labels column */}
-        <div className="sticky left-0 z-10 bg-white">
+        <div className="sticky left-0 z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 w-20">
           {timeBlocks.map((block, index) => (
             index % 4 === 0 && (
-              <div key={`label-${block.time}`} className="h-20 flex items-center pr-2 font-medium">
+              <div 
+                key={`label-${block.time}`} 
+                className="h-20 flex items-center justify-end pr-4 font-medium text-sm text-gray-600 dark:text-gray-300"
+              >
                 {block.time}
               </div>
             )
@@ -86,16 +86,16 @@ export function ScheduleDisplay({
         </div>
 
         {/* Schedule grid */}
-        <div className="flex flex-row flex-1">
+        <div className="flex flex-row flex-1 relative">
           {timeBlocks.map((block, index) => (
             <div
               key={block.time}
-              className="relative flex-shrink-0 w-[30px] h-20 border-r border-gray-200"
+              className="relative flex-shrink-0 w-[60px] h-20 border-r border-gray-200 dark:border-gray-700"
             >
               {block.schedules.map((schedule, scheduleIndex) => {
                 const startBlock = getBlockIndex(new Date(schedule.start_time).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }));
                 const endBlock = getBlockIndex(new Date(schedule.end_time).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }));
-                const width = (endBlock - startBlock) * 30;
+                const width = (endBlock - startBlock) * 60;
                 
                 if (index === startBlock) {
                   return (
@@ -104,13 +104,13 @@ export function ScheduleDisplay({
                       className="absolute z-10"
                       style={{
                         width: `${width}px`,
-                        top: `${scheduleIndex * 25}px`,
+                        top: `${scheduleIndex * 30}px`, // Increased spacing between schedules
                       }}
                     >
-                      <div className="bg-blue-200 p-1 rounded-md border border-blue-300 relative group">
+                      <div className="bg-blue-100 dark:bg-blue-900 p-1 rounded-md border border-blue-300 dark:border-blue-700 relative group min-h-[28px] hover:shadow-md transition-shadow">
                         {/* Resize handle - start */}
                         <div
-                          className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-400"
+                          className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-400 dark:hover:bg-blue-600"
                           onMouseDown={() => setResizing({ 
                             scheduleId: schedule.scheduleId, 
                             type: 'start',
@@ -118,12 +118,14 @@ export function ScheduleDisplay({
                           })}
                         />
                         
-                        <div className="flex justify-between items-center min-w-[100px]">
-                          <span className="text-xs truncate">{schedule.employeeName}</span>
+                        <div className="flex justify-between items-center gap-2 px-2">
+                          <span className="text-sm font-medium truncate text-gray-700 dark:text-gray-200">
+                            {schedule.employeeName}
+                          </span>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                             onClick={() => onDelete(schedule.scheduleId)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -132,7 +134,7 @@ export function ScheduleDisplay({
 
                         {/* Resize handle - end */}
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-400"
+                          className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-400 dark:hover:bg-blue-600"
                           onMouseDown={() => setResizing({ 
                             scheduleId: schedule.scheduleId, 
                             type: 'end',
