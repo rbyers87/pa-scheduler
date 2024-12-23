@@ -15,7 +15,8 @@ const Index = () => {
     console.log("Index: Component mounted with session:", {
       userId: session?.user?.id,
       hasAccessToken: !!accessToken,
-      role: session?.user?.user_metadata?.role
+      role: session?.user?.user_metadata?.role,
+      sessionObject: session
     });
   }, [session, accessToken]);
 
@@ -30,13 +31,18 @@ const Index = () => {
       console.log("Index: Fetching reports with session:", {
         userId: session.user.id,
         hasAccessToken: !!accessToken,
-        role: session.user.user_metadata?.role
+        role: session.user.user_metadata?.role,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          apikey: supabase.supabaseKey
+        }
       });
 
       const { data, error: queryError } = await supabase
         .from('reports')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .throwOnError();
 
       if (queryError) {
         console.error("Index: Error fetching reports:", queryError);
@@ -44,7 +50,8 @@ const Index = () => {
       }
 
       console.log("Index: Successfully fetched reports:", {
-        count: data?.length || 0
+        count: data?.length || 0,
+        data
       });
 
       return (data || []) as Report[];
