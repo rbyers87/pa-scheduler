@@ -37,7 +37,8 @@ const Index = ({ accessToken }: { accessToken: string }) => {
       const { data, error: queryError } = await supabase
         .from('reports')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .throwOnError();
 
       if (queryError) {
         console.error("Index: Error fetching reports:", queryError);
