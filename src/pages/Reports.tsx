@@ -22,26 +22,27 @@ import { Loader2 } from "lucide-react";
 type Report = Tables<'reports'>
 
 const Reports = () => {
-  const { session } = useAuth();
+  const { session, accessToken } = useAuth();
   const { toast } = useToast();
 
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id) {
-        console.error("No valid session");
+      if (!session?.user?.id || !accessToken) {
+        console.error("No valid session or access token");
         throw new Error('Authentication required');
       }
 
       console.log("Fetching reports with session:", {
         userId: session.user.id,
-        hasAccessToken: !!session.access_token
+        hasAccessToken: !!accessToken
       });
 
       const { data, error } = await supabase
         .from('reports')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .throwOnError();
 
       if (error) {
         console.error("Error fetching reports:", error);
@@ -50,7 +51,7 @@ const Reports = () => {
 
       return data || [];
     },
-    enabled: !!session?.user?.id && !!session?.access_token,
+    enabled: !!session?.user?.id && !!accessToken,
     meta: {
       onError: (error: any) => {
         console.error("Reports query error:", error);
@@ -74,6 +75,14 @@ const Reports = () => {
       });
     }
   }, [error, toast]);
+
+  if (!session?.user?.id || !accessToken) {
+    return (
+      <div className="text-center py-4">
+        Please log in to view reports.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
