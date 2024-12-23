@@ -22,12 +22,16 @@ const Index = () => {
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id) {
-        console.error("Index: No valid session");
+      if (!session?.user?.id || !accessToken) {
+        console.error("Index: No valid session or access token");
         throw new Error('Authentication required');
       }
 
-      console.log("Index: Fetching reports for user:", session.user.id);
+      console.log("Index: Fetching reports with session:", {
+        userId: session.user.id,
+        hasAccessToken: !!accessToken,
+        role: session.user.user_metadata?.role
+      });
 
       const { data, error: queryError } = await supabase
         .from('reports')
