@@ -147,28 +147,50 @@ export function DailyBlocksView({ date }: DailyBlocksViewProps) {
         { position: "Minimum Staffing", name: "" },
       ],
     },
+    {
+      title: "Engine 2",
+      rows: [
+        { 
+          position: "Captain", 
+          name: "Kay Hess",
+          schedules: schedules?.filter(s => 
+            s.employee.first_name === "Kay" && 
+            s.employee.last_name === "Hess"
+          )
+        },
+        { 
+          position: "Lieutenant", 
+          name: "Tami Paul",
+          schedules: schedules?.filter(s => 
+            s.employee.first_name === "Tami" && 
+            s.employee.last_name === "Paul"
+          )
+        },
+        { 
+          position: "Driver", 
+          name: "Tracy Mills",
+          schedules: schedules?.filter(s => 
+            s.employee.first_name === "Tracy" && 
+            s.employee.last_name === "Mills"
+          )
+        },
+        { position: "Minimum Staffing", name: "" },
+      ],
+    },
   ];
 
   return (
     <Card className="p-4">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">Daily Blocks View</h2>
-          <span className="text-muted-foreground">
-            {format(date, "EEE, MMM d, yyyy")}
-          </span>
-        </div>
-
-        <div className="space-y-6">
-          {blocks.map((block, blockIndex) => (
-            <UnitBlock
-              key={blockIndex}
-              title={block.title}
-              rows={block.rows}
-              timeSlots={timeSlots}
-            />
-          ))}
-        </div>
+      <div className="space-y-6">
+        {blocks.map((block, blockIndex) => (
+          <UnitBlock
+            key={blockIndex}
+            title={block.title}
+            date={format(date, "EEE, MMM d, yyyy")}
+            rows={block.rows}
+            timeSlots={timeSlots}
+          />
+        ))}
       </div>
     </Card>
   );

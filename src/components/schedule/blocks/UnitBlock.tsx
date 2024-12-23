@@ -3,6 +3,7 @@ import { TimeHeader } from "./TimeHeader";
 
 interface UnitBlockProps {
   title: string;
+  date: string;
   rows: {
     position: string;
     name: string;
@@ -14,10 +15,13 @@ interface UnitBlockProps {
   timeSlots: number[];
 }
 
-export function UnitBlock({ title, rows, timeSlots }: UnitBlockProps) {
+export function UnitBlock({ title, date, rows, timeSlots }: UnitBlockProps) {
   return (
-    <div className="space-y-2 border-b pb-4 last:border-b-0">
-      <h3 className="font-semibold text-lg">{title}</h3>
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <h3 className="font-semibold text-lg">{title}</h3>
+        <span className="text-sm text-muted-foreground">{date}</span>
+      </div>
       <div className="border rounded-lg overflow-hidden">
         <TimeHeader timeSlots={timeSlots} />
         {rows.map((row, index) => (
