@@ -27,14 +27,12 @@ const Index = () => {
         throw new Error('Authentication required');
       }
 
-      console.log("Index: Fetching reports with session:", {
-        userId: session.user.id,
-        hasAccessToken: !!accessToken
-      });
+      console.log("Index: Fetching reports for user:", session.user.id);
 
       const { data, error: queryError } = await supabase
         .from('reports')
         .select('*')
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
       if (queryError) {
