@@ -1,14 +1,3 @@
-/**
- * Reports Page
- * 
- * Generates and displays various scheduling reports.
- * Features:
- * - Daily riding lists
- * - Schedule coverage reports
- * - Time off reports
- * - Export reports to print
- */
-
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,7 +39,8 @@ const Reports = ({ accessToken }: { accessToken: string }) => {
       const { data, error: queryError } = await supabase
         .from('reports')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .throwOnError();
 
       if (queryError) {
         console.error("Reports: Error fetching reports:", queryError);
