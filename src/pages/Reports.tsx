@@ -22,7 +22,7 @@ import { Loader2 } from "lucide-react";
 type Report = Tables<'reports'>
 
 const Reports = () => {
-  const { session, accessToken } = useAuth();
+  const { session } = useAuth();
   const { toast } = useToast();
 
   const { data: reports = [], isLoading, error } = useQuery({
@@ -35,23 +35,23 @@ const Reports = () => {
 
       console.log("Fetching reports with session:", {
         userId: session.user.id,
-        hasAccessToken: !!accessToken,
+        hasAccessToken: !!session.access_token,
         role: session.user.user_metadata?.role
       });
 
-      const { data, error } = await supabase
+      const { data, error: queryError } = await supabase
         .from('reports')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching reports:", error);
-        throw error;
+      if (queryError) {
+        console.error("Error fetching reports:", queryError);
+        throw queryError;
       }
 
       return data || [];
     },
-    enabled: !!session?.user?.id && !!accessToken,
+    enabled: !!session?.user?.id && !!session?.access_token,
     meta: {
       onError: (error: any) => {
         console.error("Reports query error:", error);
