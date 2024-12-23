@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
 import { Tables } from "@/integrations/supabase/types";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 type Report = Tables<'reports'>;
@@ -23,8 +23,8 @@ const Index = () => {
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id || !accessToken) {
-        console.error("Index: No valid session or access token");
+      if (!session?.user?.id) {
+        console.error("Index: No valid session");
         throw new Error('Authentication required');
       }
 
@@ -34,18 +34,17 @@ const Index = () => {
         role: session.user.user_metadata?.role
       });
 
-      // Query only reports for the current user unless they're an admin
-      const query = supabase
+      let query = supabase
         .from('reports')
         .select('*')
         .order('created_at', { ascending: false });
 
-      // If user is not an admin, filter by their user_id
+      // If user is not an admin, only show their reports
       if (session.user.user_metadata?.role !== 'admin') {
-        query.eq('user_id', session.user.id);
+        query = query.eq('user_id', session.user.id);
       }
 
-      const { data, error: queryError } = await query.throwOnError();
+      const { data, error: queryError } = await query;
 
       if (queryError) {
         console.error("Index: Error fetching reports:", queryError);
@@ -53,11 +52,10 @@ const Index = () => {
       }
 
       console.log("Index: Successfully fetched reports:", {
-        count: data?.length || 0,
-        data
+        count: data?.length || 0
       });
 
-      return (data || []) as Report[];
+      return data || [];
     },
     enabled: !!session?.user?.id && !!accessToken,
     meta: {
