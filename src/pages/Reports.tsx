@@ -22,13 +22,21 @@ import { Loader2 } from "lucide-react";
 type Report = Tables<'reports'>
 
 const Reports = () => {
-  const { session } = useAuth();
+  const { session, accessToken } = useAuth();
   const { toast } = useToast();
 
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
     queryFn: async () => {
-      console.log("Fetching reports with session:", session?.user?.id);
+      if (!session?.user?.id || !accessToken) {
+        console.error("No valid session or access token");
+        throw new Error('Authentication required');
+      }
+
+      console.log("Fetching reports with session:", {
+        userId: session.user.id,
+        hasAccessToken: !!accessToken
+      });
       
       const { data, error } = await supabase
         .from('reports')
@@ -43,7 +51,7 @@ const Reports = () => {
       console.log("Reports fetched successfully:", data);
       return data || [];
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id && !!accessToken,
   });
 
   // Show error toast if query fails
