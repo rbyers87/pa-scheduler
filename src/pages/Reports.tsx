@@ -28,20 +28,31 @@ const Reports = () => {
     const fetchReports = async () => {
       if (!session?.user?.id) return;
 
-      const { data, error } = await supabase
-        .from('reports')
-        .select('*')
-        .eq('user_id', session.user.id);
+      console.log("Fetching reports for user:", session.user.id);
+      
+      try {
+        const { data, error } = await supabase
+          .from('reports')
+          .select('*');
 
-      if (error) {
-        console.error("Error fetching reports:", error);
+        if (error) {
+          console.error("Error fetching reports:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load reports.",
+            variant: "destructive",
+          });
+        } else {
+          console.log("Reports fetched successfully:", data);
+          setReports(data || []);
+        }
+      } catch (error) {
+        console.error("Error in fetchReports:", error);
         toast({
           title: "Error",
-          description: "Failed to load reports.",
+          description: "An unexpected error occurred.",
           variant: "destructive",
         });
-      } else {
-        setReports(data || []);
       }
     };
 
