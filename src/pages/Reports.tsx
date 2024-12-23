@@ -32,6 +32,13 @@ const Reports = () => {
       }
 
       console.log("Fetching reports with session:", session?.user?.id);
+      
+      // Create a new Supabase client with the access token
+      const authorizedClient = supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: session?.refresh_token || '',
+      });
+
       const { data, error } = await supabase
         .from('reports')
         .select('*')
