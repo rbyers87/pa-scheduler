@@ -31,11 +31,7 @@ const Index = () => {
       console.log("Index: Fetching reports with session:", {
         userId: session.user.id,
         hasAccessToken: !!accessToken,
-        role: session.user.user_metadata?.role,
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          apikey: supabase.supabaseKey
-        }
+        role: session.user.user_metadata?.role
       });
 
       const { data, error: queryError } = await supabase
