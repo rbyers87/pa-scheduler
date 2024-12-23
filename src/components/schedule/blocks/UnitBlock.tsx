@@ -1,4 +1,5 @@
 import { ScheduleRow } from "./ScheduleRow";
+import { TimeHeader } from "./TimeHeader";
 
 interface UnitBlockProps {
   title: string;
