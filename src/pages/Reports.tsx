@@ -21,8 +21,8 @@ import { Loader2 } from "lucide-react";
 
 type Report = Tables<'reports'>
 
-const Reports = ({ accessToken }: { accessToken: string }) => {
-  const { session } = useAuth();
+const Reports = () => {
+  const { session, accessToken } = useAuth();
   const { toast } = useToast();
 
   const { data: reports = [], isLoading, error } = useQuery({
@@ -35,7 +35,8 @@ const Reports = ({ accessToken }: { accessToken: string }) => {
 
       console.log("Fetching reports with session:", {
         userId: session.user.id,
-        hasAccessToken: !!accessToken
+        hasAccessToken: !!accessToken,
+        role: session.user.user_metadata?.role
       });
 
       const { data, error } = await supabase
