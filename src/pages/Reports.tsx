@@ -53,7 +53,21 @@ const Reports = () => {
     },
     enabled: !!session?.user?.id,
     retry: false,
-    onError: (error: any) => {
+    meta: {
+      onError: (error: any) => {
+        console.error("Reports query error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load reports. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  });
+
+  // Handle error display through meta.onError
+  useEffect(() => {
+    if (error) {
       console.error("Reports query error:", error);
       toast({
         title: "Error",
@@ -61,7 +75,7 @@ const Reports = () => {
         variant: "destructive",
       });
     }
-  });
+  }, [error, toast]);
 
   return (
     <div className="space-y-6 p-6">
