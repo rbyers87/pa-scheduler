@@ -38,21 +38,19 @@ const Reports = () => {
         hasAccessToken: !!session.access_token
       });
 
-      const { data, error: fetchError } = await supabase
+      const { data, error } = await supabase
         .from('reports')
         .select('*')
-        .order('created_at', { ascending: false })
-        .throwOnError();
+        .order('created_at', { ascending: false });
 
-      if (fetchError) {
-        console.error("Error fetching reports:", fetchError);
-        throw fetchError;
+      if (error) {
+        console.error("Error fetching reports:", error);
+        throw error;
       }
 
       return data || [];
     },
     enabled: !!session?.user?.id,
-    retry: false,
     meta: {
       onError: (error: any) => {
         console.error("Reports query error:", error);
