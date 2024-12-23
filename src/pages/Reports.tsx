@@ -48,7 +48,6 @@ const Reports = () => {
         throw fetchError;
       }
 
-      console.log("Reports fetched successfully:", data);
       return data || [];
     },
     enabled: !!session?.user?.id,
