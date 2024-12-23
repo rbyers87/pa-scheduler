@@ -34,15 +34,14 @@ const Index = ({ accessToken }: { accessToken: string }) => {
         role: session.user.user_metadata?.role
       });
 
-      const { data, error: queryError } = await supabase
+      const { data, error } = await supabase
         .from('reports')
         .select('*')
-        .order('created_at', { ascending: false })
-        .throwOnError();
+        .order('created_at', { ascending: false });
 
-      if (queryError) {
-        console.error("Index: Error fetching reports:", queryError);
-        throw queryError;
+      if (error) {
+        console.error("Index: Error fetching reports:", error);
+        throw error;
       }
 
       console.log("Index: Successfully fetched reports:", {
