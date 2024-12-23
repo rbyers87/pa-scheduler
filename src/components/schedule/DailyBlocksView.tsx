@@ -3,18 +3,7 @@ import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-
-interface ScheduleBlock {
-  title: string;
-  rows: {
-    position: string;
-    name: string;
-    schedules?: Array<{
-      start_time: string;
-      end_time: string;
-    }>;
-  }[];
-}
+import { UnitBlock } from "./blocks/UnitBlock";
 
 interface DailyBlocksViewProps {
   date: Date;
@@ -104,8 +93,9 @@ export function DailyBlocksView({ date }: DailyBlocksViewProps) {
     enabled: !!session?.user?.id,
   });
 
-  // Sample data structure - replace with actual data from your backend
-  const blocks: ScheduleBlock[] = [
+  const timeSlots = Array.from({ length: 9 }, (_, i) => i + 7); // 7:00 to 15:00
+
+  const blocks = [
     {
       title: "Battalion 1",
       rows: [
@@ -159,22 +149,6 @@ export function DailyBlocksView({ date }: DailyBlocksViewProps) {
     },
   ];
 
-  const timeSlots = Array.from({ length: 9 }, (_, i) => i + 7); // 7:00 to 15:00
-
-  const getScheduleStyle = (startHour: number, schedules?: Array<{ start_time: string; end_time: string }>) => {
-    if (!schedules || schedules.length === 0) return "";
-    
-    const schedule = schedules[0]; // For now, just handle the first schedule
-    const start = new Date(schedule.start_time);
-    const end = new Date(schedule.end_time);
-    
-    if (start.getHours() <= startHour && end.getHours() > startHour) {
-      return "bg-blue-500 text-white";
-    }
-    
-    return "";
-  };
-
   return (
     <Card className="p-4">
       <div className="space-y-2">
@@ -186,45 +160,12 @@ export function DailyBlocksView({ date }: DailyBlocksViewProps) {
         </div>
 
         {blocks.map((block, blockIndex) => (
-          <div key={blockIndex} className="space-y-2">
-            <h3 className="font-semibold text-lg">{block.title}</h3>
-            <div className="border rounded-lg overflow-hidden">
-              {/* Time header */}
-              <div className="flex border-b bg-muted/50">
-                <div className="w-40 border-r p-2 bg-background">Position</div>
-                {timeSlots.map((hour) => (
-                  <div
-                    key={hour}
-                    className="flex-1 p-2 text-center border-r last:border-r-0 min-w-[100px]"
-                  >
-                    {`${hour}:00`}
-                  </div>
-                ))}
-              </div>
-
-              {/* Schedule rows */}
-              {block.rows.map((row, rowIndex) => (
-                <div
-                  key={rowIndex}
-                  className="flex border-b last:border-b-0 hover:bg-muted/50 transition-colors"
-                >
-                  <div className="w-40 border-r p-2 font-medium">
-                    {row.position}
-                  </div>
-                  <div className="flex flex-1">
-                    {timeSlots.map((hour) => (
-                      <div
-                        key={hour}
-                        className={`flex-1 p-2 border-r last:border-r-0 ${getScheduleStyle(hour, row.schedules)}`}
-                      >
-                        {hour === timeSlots[0] && row.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <UnitBlock
+            key={blockIndex}
+            title={block.title}
+            rows={block.rows}
+            timeSlots={timeSlots}
+          />
         ))}
       </div>
     </Card>
