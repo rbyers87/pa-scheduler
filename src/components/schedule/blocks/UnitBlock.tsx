@@ -16,7 +16,7 @@ interface UnitBlockProps {
 
 export function UnitBlock({ title, rows, timeSlots }: UnitBlockProps) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 border-b pb-4 last:border-b-0">
       <h3 className="font-semibold text-lg">{title}</h3>
       <div className="border rounded-lg overflow-hidden">
         <TimeHeader timeSlots={timeSlots} />

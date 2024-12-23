@@ -151,7 +151,7 @@ export function DailyBlocksView({ date }: DailyBlocksViewProps) {
 
   return (
     <Card className="p-4">
-      <div className="space-y-2">
+      <div className="space-y-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">Daily Blocks View</h2>
           <span className="text-muted-foreground">
@@ -159,14 +159,16 @@ export function DailyBlocksView({ date }: DailyBlocksViewProps) {
           </span>
         </div>
 
-        {blocks.map((block, blockIndex) => (
-          <UnitBlock
-            key={blockIndex}
-            title={block.title}
-            rows={block.rows}
-            timeSlots={timeSlots}
-          />
-        ))}
+        <div className="space-y-6">
+          {blocks.map((block, blockIndex) => (
+            <UnitBlock
+              key={blockIndex}
+              title={block.title}
+              rows={block.rows}
+              timeSlots={timeSlots}
+            />
+          ))}
+        </div>
       </div>
     </Card>
   );

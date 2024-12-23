@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import React from 'react';
 
 interface TimeHeaderProps {
   timeSlots: number[];
@@ -13,7 +13,7 @@ export function TimeHeader({ timeSlots }: TimeHeaderProps) {
           key={hour}
           className="flex-1 p-2 text-center border-r last:border-r-0 min-w-[100px]"
         >
-          {`${hour}:00`}
+          {`${hour.toString().padStart(2, '0')}:00`}
         </div>
       ))}
     </div>
