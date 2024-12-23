@@ -5,6 +5,7 @@ import {
   FileText,
   Settings,
   LogOut,
+  Grid,
 } from "lucide-react";
 import {
   Sidebar,
@@ -20,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const menuItems = [
+  { title: "Index", icon: Grid, path: "/" },
   { title: "Schedule", icon: Calendar, path: "/schedule" },
   { title: "Time Off", icon: Clock, path: "/time-off" },
   { title: "Employees", icon: Users, path: "/employees" },
@@ -29,14 +31,12 @@ const menuItems = [
 
 export function AppSidebar() {
   const navigate = useNavigate();
-  const { signOut, accessToken } = useAuth();  // Destructure accessToken from context
+  const { signOut, accessToken } = useAuth();
 
-  // You can use the accessToken to handle conditional rendering or actions
   const handleLogout = async () => {
     if (accessToken) {
       console.log("Logging out, accessToken available:", accessToken);
       await signOut();
-      // Optionally navigate after logout
       navigate("/login", { replace: true });
     } else {
       console.log("No accessToken available, logging out");
