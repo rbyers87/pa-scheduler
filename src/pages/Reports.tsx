@@ -37,11 +37,12 @@ const Reports = () => {
         userId: session.user.id,
         hasAccessToken: !!session.access_token
       });
-      
+
       const { data, error: fetchError } = await supabase
         .from('reports')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .throwOnError();
 
       if (fetchError) {
         console.error("Error fetching reports:", fetchError);
@@ -51,11 +52,8 @@ const Reports = () => {
       return data || [];
     },
     enabled: !!session?.user?.id,
-  });
-
-  // Show error toast if query fails
-  useEffect(() => {
-    if (error) {
+    retry: false,
+    onError: (error: any) => {
       console.error("Reports query error:", error);
       toast({
         title: "Error",
@@ -63,15 +61,7 @@ const Reports = () => {
         variant: "destructive",
       });
     }
-  }, [error, toast]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
+  });
 
   return (
     <div className="space-y-6 p-6">
@@ -80,36 +70,46 @@ const Reports = () => {
         <Button onClick={() => console.log("Exporting reports...")}>Export Reports</Button>
       </div>
       
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Report Name</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {reports.length > 0 ? (
-            reports.map((report) => (
-              <TableRow key={report.id}>
-                <TableCell>{report.name}</TableCell>
-                <TableCell>{new Date(report.created_at).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <Button variant="outline" onClick={() => console.log("Viewing report", report.id)}>
-                    View
-                  </Button>
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : error ? (
+        <div className="text-center py-4 text-red-500">
+          Failed to load reports. Please try refreshing the page.
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Report Name</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {reports.length > 0 ? (
+              reports.map((report) => (
+                <TableRow key={report.id}>
+                  <TableCell>{report.name}</TableCell>
+                  <TableCell>{new Date(report.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Button variant="outline" onClick={() => console.log("Viewing report", report.id)}>
+                      View
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-4">
+                  No reports available
                 </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={3} className="text-center py-4">
-                No reports available
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            )}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 };
