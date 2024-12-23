@@ -21,15 +21,15 @@ import { Loader2 } from "lucide-react";
 
 type Report = Tables<'reports'>
 
-const Reports = () => {
-  const { session, accessToken } = useAuth();
+const Reports = ({ accessToken }: { accessToken: string }) => {
+  const { session } = useAuth();
   const { toast } = useToast();
 
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id || !accessToken) {
-        console.error("No valid session or access token");
+      if (!session?.user?.id) {
+        console.error("No valid session");
         throw new Error('Authentication required');
       }
 
@@ -75,7 +75,7 @@ const Reports = () => {
     }
   }, [error, toast]);
 
-  if (!session?.user?.id || !accessToken) {
+  if (!session?.user?.id) {
     return (
       <div className="text-center py-4">
         Please log in to view reports.
