@@ -17,21 +17,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
 type Report = Tables<'reports'>
 
 const Reports = () => {
-  const { session, accessToken } = useAuth();
+  const { session } = useAuth();
   const { toast } = useToast();
 
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id || !accessToken) {
-        throw new Error('No authenticated session');
-      }
-
-      console.log("Fetching reports for user:", session.user.id);
+      console.log("Fetching reports with session:", session?.user?.id);
       
       const { data, error } = await supabase
         .from('reports')
@@ -46,7 +43,7 @@ const Reports = () => {
       console.log("Reports fetched successfully:", data);
       return data || [];
     },
-    enabled: !!session?.user?.id && !!accessToken,
+    enabled: !!session?.user?.id,
   });
 
   // Show error toast if query fails
@@ -62,13 +59,20 @@ const Reports = () => {
   }, [error, toast]);
 
   if (isLoading) {
-    return <div>Loading reports...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">Reports</h2>
-      <Button onClick={() => console.log("Exporting reports...")}>Export Reports</Button>
+    <div className="space-y-6 p-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold tracking-tight">Reports</h2>
+        <Button onClick={() => console.log("Exporting reports...")}>Export Reports</Button>
+      </div>
+      
       <Table>
         <TableHeader>
           <TableRow>
