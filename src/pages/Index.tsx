@@ -23,8 +23,8 @@ const Index = () => {
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id) {
-        console.error("Index: No valid session");
+      if (!session?.user?.id || !accessToken) {
+        console.error("Index: No valid session or access token");
         throw new Error('Authentication required');
       }
 
@@ -34,17 +34,11 @@ const Index = () => {
         role: session.user.user_metadata?.role
       });
 
-      let query = supabase
+      const { data, error: queryError } = await supabase
         .from('reports')
         .select('*')
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
-
-      // If user is not an admin, only show their reports
-      if (session.user.user_metadata?.role !== 'admin') {
-        query = query.eq('user_id', session.user.id);
-      }
-
-      const { data, error: queryError } = await query;
 
       if (queryError) {
         console.error("Index: Error fetching reports:", queryError);
