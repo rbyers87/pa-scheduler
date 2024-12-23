@@ -8,8 +8,8 @@ import { Loader2 } from "lucide-react";
 
 type Report = Tables<'reports'>;
 
-const Index = () => {
-  const { session, accessToken } = useAuth();
+const Index = ({ accessToken }: { accessToken: string }) => {
+  const { session } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -23,8 +23,8 @@ const Index = () => {
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id || !accessToken) {
-        console.error("Index: No valid session or access token");
+      if (!session?.user?.id) {
+        console.error("Index: No valid session");
         throw new Error('Authentication required');
       }
 
@@ -37,7 +37,6 @@ const Index = () => {
       const { data, error: queryError } = await supabase
         .from('reports')
         .select('*')
-        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
       if (queryError) {
@@ -81,12 +80,12 @@ const Index = () => {
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         ) : error ? (
-          <div className="text-red-500">
+          <div className="text-red-500 p-4 rounded-md bg-red-50">
             Error loading reports. Please try again.
           </div>
         ) : reports.length > 0 ? (
           reports.map((report) => (
-            <div key={report.id} className="p-4 border rounded">
+            <div key={report.id} className="p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white">
               <h3 className="font-semibold">{report.name}</h3>
               <p className="text-sm text-gray-500">
                 Created: {new Date(report.created_at).toLocaleDateString()}
@@ -94,7 +93,9 @@ const Index = () => {
             </div>
           ))
         ) : (
-          <div>No reports available.</div>
+          <div className="text-center text-gray-500 p-4">
+            No reports available.
+          </div>
         )}
       </div>
     </div>
