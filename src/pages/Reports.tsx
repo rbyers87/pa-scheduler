@@ -41,8 +41,7 @@ const Reports = () => {
       const { data, error } = await supabase
         .from('reports')
         .select('*')
-        .order('created_at', { ascending: false })
-        .throwOnError();
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error("Error fetching reports:", error);
