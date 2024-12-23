@@ -21,16 +21,21 @@ import { useQuery } from "@tanstack/react-query";
 type Report = Tables<'reports'>
 
 const Reports = () => {
-  const { session } = useAuth();
+  const { session, accessToken } = useAuth();
   const { toast } = useToast();
 
   const { data: reports = [], isLoading, error } = useQuery({
-    queryKey: ['reports'],
+    queryKey: ['reports', accessToken],
     queryFn: async () => {
+      if (!accessToken) {
+        throw new Error('No access token available');
+      }
+
       console.log("Fetching reports with session:", session?.user?.id);
       const { data, error } = await supabase
         .from('reports')
-        .select('*');
+        .select('*')
+        .throwOnError();
 
       if (error) {
         console.error("Error fetching reports:", error);
@@ -40,12 +45,13 @@ const Reports = () => {
       console.log("Reports fetched successfully:", data);
       return data || [];
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id && !!accessToken,
   });
 
   // Show error toast if query fails
   useEffect(() => {
     if (error) {
+      console.error("Reports query error:", error);
       toast({
         title: "Error",
         description: "Failed to load reports. Please try again.",
