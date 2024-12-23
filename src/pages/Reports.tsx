@@ -21,21 +21,29 @@ import { Loader2 } from "lucide-react";
 
 type Report = Tables<'reports'>
 
-const Reports = () => {
+const Reports = ({ accessToken }: { accessToken: string }) => {
   const { session } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    console.log("Reports: Component mounted with session:", {
+      userId: session?.user?.id,
+      hasAccessToken: !!accessToken,
+      role: session?.user?.user_metadata?.role
+    });
+  }, [session, accessToken]);
 
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) {
-        console.error("No valid session");
+        console.error("Reports: No valid session");
         throw new Error('Authentication required');
       }
 
-      console.log("Fetching reports with session:", {
+      console.log("Reports: Fetching reports with session:", {
         userId: session.user.id,
-        hasAccessToken: !!session.access_token,
+        hasAccessToken: !!accessToken,
         role: session.user.user_metadata?.role
       });
 
@@ -45,16 +53,20 @@ const Reports = () => {
         .order('created_at', { ascending: false });
 
       if (queryError) {
-        console.error("Error fetching reports:", queryError);
+        console.error("Reports: Error fetching reports:", queryError);
         throw queryError;
       }
 
+      console.log("Reports: Successfully fetched reports:", {
+        count: data?.length || 0
+      });
+
       return data || [];
     },
-    enabled: !!session?.user?.id && !!session?.access_token,
+    enabled: !!session?.user?.id && !!accessToken,
     meta: {
       onError: (error: any) => {
-        console.error("Reports query error:", error);
+        console.error("Reports: Query error:", error);
         toast({
           title: "Error",
           description: "Failed to load reports. Please try again.",
