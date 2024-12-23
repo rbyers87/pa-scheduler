@@ -7,8 +7,8 @@ import { Tables } from "@/integrations/supabase/types";
 
 type Report = Tables<'reports'>;
 
-const Index = ({ accessToken }: { accessToken: string }) => {
-  const { session } = useAuth();
+const Index = () => {
+  const { session, accessToken } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -30,12 +30,6 @@ const Index = ({ accessToken }: { accessToken: string }) => {
       console.log("Index: Fetching reports with session:", {
         userId: session.user.id,
         hasAccessToken: !!accessToken
-      });
-
-      // Create a new Supabase client with the access token
-      const authorizedClient = supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: session.refresh_token,
       });
 
       const { data, error: queryError } = await supabase
