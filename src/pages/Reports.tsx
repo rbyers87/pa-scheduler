@@ -9,60 +9,58 @@
  * - Export reports to print
  */
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
+import { useQuery } from "@tanstack/react-query";
 
 type Report = Tables<'reports'>
 
 const Reports = () => {
   const { session } = useAuth();
   const { toast } = useToast();
-  const [reports, setReports] = useState<Report[]>([]);
 
-  useEffect(() => {
-    const fetchReports = async () => {
-      if (!session?.user?.id) return;
+  const { data: reports = [], isLoading, error } = useQuery({
+    queryKey: ['reports'],
+    queryFn: async () => {
+      console.log("Fetching reports with session:", session?.user?.id);
+      const { data, error } = await supabase
+        .from('reports')
+        .select('*');
 
-      console.log("Fetching reports for user:", session.user.id);
-      
-      try {
-        const { data, error } = await supabase
-          .from('reports')
-          .select('*');
-
-        if (error) {
-          console.error("Error fetching reports:", error);
-          toast({
-            title: "Error",
-            description: "Failed to load reports.",
-            variant: "destructive",
-          });
-        } else {
-          console.log("Reports fetched successfully:", data);
-          setReports(data || []);
-        }
-      } catch (error) {
-        console.error("Error in fetchReports:", error);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred.",
-          variant: "destructive",
-        });
+      if (error) {
+        console.error("Error fetching reports:", error);
+        throw error;
       }
-    };
 
-    fetchReports();
-  }, [session, toast]);
+      console.log("Reports fetched successfully:", data);
+      return data || [];
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  // Show error toast if query fails
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load reports. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   const handleExport = () => {
-    // Logic to export reports to print
     console.log("Exporting reports...");
   };
+
+  if (isLoading) {
+    return <div>Loading reports...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -77,18 +75,19 @@ const Reports = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {reports.map((report) => (
-            <TableRow key={report.id}>
-              <TableCell>{report.name}</TableCell>
-              <TableCell>{new Date(report.created_at).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <Button variant="outline" onClick={() => console.log("Viewing report", report.id)}>
-                  View
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-          {reports.length === 0 && (
+          {reports.length > 0 ? (
+            reports.map((report) => (
+              <TableRow key={report.id}>
+                <TableCell>{report.name}</TableCell>
+                <TableCell>{new Date(report.created_at).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <Button variant="outline" onClick={() => console.log("Viewing report", report.id)}>
+                    View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
             <TableRow>
               <TableCell colSpan={3} className="text-center py-4">
                 No reports available
