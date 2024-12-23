@@ -3,6 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { Tables } from "@/integrations/supabase/types";
+
+type Report = Tables<'reports'>;
 
 const Index = ({ accessToken }: { accessToken: string }) => {
   const { session } = useAuth();
@@ -32,7 +35,8 @@ const Index = ({ accessToken }: { accessToken: string }) => {
       const { data, error: queryError } = await supabase
         .from('reports')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .throwOnError();
 
       if (queryError) {
         console.error("Index: Error fetching reports:", queryError);
@@ -43,7 +47,7 @@ const Index = ({ accessToken }: { accessToken: string }) => {
         count: data?.length || 0
       });
 
-      return data || [];
+      return (data || []) as Report[];
     },
     enabled: !!session?.user?.id && !!accessToken,
     meta: {
@@ -51,7 +55,7 @@ const Index = ({ accessToken }: { accessToken: string }) => {
         console.error("Index: Query error:", error);
         toast({
           title: "Error",
-          description: "Failed to load data. Please try again.",
+          description: "Failed to load reports. Please try again.",
           variant: "destructive",
         });
       }
@@ -74,10 +78,10 @@ const Index = ({ accessToken }: { accessToken: string }) => {
           <div>Loading...</div>
         ) : error ? (
           <div className="text-red-500">
-            Error loading data. Please try again.
+            Error loading reports. Please try again.
           </div>
         ) : reports.length > 0 ? (
-          reports.map((report: any) => (
+          reports.map((report) => (
             <div key={report.id} className="p-4 border rounded">
               <h3 className="font-semibold">{report.name}</h3>
               <p className="text-sm text-gray-500">
