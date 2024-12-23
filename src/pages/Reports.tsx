@@ -22,36 +22,36 @@ import { Loader2 } from "lucide-react";
 type Report = Tables<'reports'>
 
 const Reports = () => {
-  const { session, accessToken } = useAuth();
+  const { session } = useAuth();
   const { toast } = useToast();
 
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id || !accessToken) {
-        console.error("No valid session or access token");
+      if (!session?.user?.id) {
+        console.error("No valid session");
         throw new Error('Authentication required');
       }
 
       console.log("Fetching reports with session:", {
         userId: session.user.id,
-        hasAccessToken: !!accessToken
+        hasAccessToken: !!session.access_token
       });
       
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('reports')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching reports:", error);
-        throw error;
+      if (fetchError) {
+        console.error("Error fetching reports:", fetchError);
+        throw fetchError;
       }
 
       console.log("Reports fetched successfully:", data);
       return data || [];
     },
-    enabled: !!session?.user?.id && !!accessToken,
+    enabled: !!session?.user?.id,
   });
 
   // Show error toast if query fails
