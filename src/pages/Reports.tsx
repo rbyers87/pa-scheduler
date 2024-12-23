@@ -50,7 +50,7 @@ const Reports = () => {
 
       return data || [];
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id && !!session?.access_token,
     meta: {
       onError: (error: any) => {
         console.error("Reports query error:", error);
