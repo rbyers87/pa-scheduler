@@ -25,24 +25,18 @@ const Reports = () => {
   const { toast } = useToast();
 
   const { data: reports = [], isLoading, error } = useQuery({
-    queryKey: ['reports', accessToken],
+    queryKey: ['reports', session?.user?.id],
     queryFn: async () => {
-      if (!accessToken) {
-        throw new Error('No access token available');
+      if (!session?.user?.id || !accessToken) {
+        throw new Error('No authenticated session');
       }
 
-      console.log("Fetching reports with session:", session?.user?.id);
+      console.log("Fetching reports for user:", session.user.id);
       
-      // Create a new Supabase client with the access token
-      const authorizedClient = supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: session?.refresh_token || '',
-      });
-
       const { data, error } = await supabase
         .from('reports')
         .select('*')
-        .throwOnError();
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error("Error fetching reports:", error);
@@ -67,10 +61,6 @@ const Reports = () => {
     }
   }, [error, toast]);
 
-  const handleExport = () => {
-    console.log("Exporting reports...");
-  };
-
   if (isLoading) {
     return <div>Loading reports...</div>;
   }
@@ -78,7 +68,7 @@ const Reports = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">Reports</h2>
-      <Button onClick={handleExport}>Export Reports</Button>
+      <Button onClick={() => console.log("Exporting reports...")}>Export Reports</Button>
       <Table>
         <TableHeader>
           <TableRow>
