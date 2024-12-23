@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Tables } from "@/integrations/supabase/types";
+import { useToast } from "@/hooks/use-toast";
 
 type Report = Tables<'reports'>;
 
@@ -16,10 +16,6 @@ const Index = () => {
       userId: session?.user?.id,
       hasAccessToken: !!accessToken,
       role: session?.user?.user_metadata?.role,
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          apikey: supabase.supabaseKey
-        }
       sessionObject: session
     });
   }, [session, accessToken]);
