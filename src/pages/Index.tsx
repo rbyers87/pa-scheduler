@@ -16,6 +16,10 @@ const Index = () => {
       userId: session?.user?.id,
       hasAccessToken: !!accessToken,
       role: session?.user?.user_metadata?.role,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          apikey: supabase.supabaseKey
+        }
       sessionObject: session
     });
   }, [session, accessToken]);
