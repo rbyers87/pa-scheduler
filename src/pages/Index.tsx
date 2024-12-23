@@ -32,11 +32,16 @@ const Index = ({ accessToken }: { accessToken: string }) => {
         hasAccessToken: !!accessToken
       });
 
+      // Create a new Supabase client with the access token
+      const authorizedClient = supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: session.refresh_token,
+      });
+
       const { data, error: queryError } = await supabase
         .from('reports')
         .select('*')
-        .order('created_at', { ascending: false })
-        .throwOnError();
+        .order('created_at', { ascending: false });
 
       if (queryError) {
         console.error("Index: Error fetching reports:", queryError);
