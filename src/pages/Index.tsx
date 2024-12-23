@@ -8,17 +8,17 @@ import { Loader2 } from "lucide-react";
 
 type Report = Tables<'reports'>;
 
-const Index = ({ accessToken }: { accessToken: string }) => {
+const Index = () => {
   const { session } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     console.log("Index: Component mounted with session:", {
       userId: session?.user?.id,
-      hasAccessToken: !!accessToken,
+      hasAccessToken: !!session?.access_token,
       role: session?.user?.user_metadata?.role
     });
-  }, [session, accessToken]);
+  }, [session]);
 
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
@@ -30,14 +30,13 @@ const Index = ({ accessToken }: { accessToken: string }) => {
 
       console.log("Index: Fetching reports with session:", {
         userId: session.user.id,
-        hasAccessToken: !!accessToken,
+        hasAccessToken: !!session.access_token,
         role: session.user.user_metadata?.role
       });
 
       const { data, error } = await supabase
         .from('reports')
         .select('*')
-        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -51,7 +50,7 @@ const Index = ({ accessToken }: { accessToken: string }) => {
 
       return data || [];
     },
-    enabled: !!session?.user?.id && !!accessToken,
+    enabled: !!session?.user?.id,
     meta: {
       onError: (error: any) => {
         console.error("Index: Query error:", error);
@@ -85,7 +84,7 @@ const Index = ({ accessToken }: { accessToken: string }) => {
             Error loading reports. Please try again.
           </div>
         ) : reports.length > 0 ? (
-          reports.map((report) => (
+          reports.map((report: Report) => (
             <div key={report.id} className="p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white">
               <h3 className="font-semibold">{report.name}</h3>
               <p className="text-sm text-gray-500">
