@@ -64,18 +64,6 @@ const Reports = () => {
     }
   });
 
-  // Handle error display through meta.onError
-  useEffect(() => {
-    if (error) {
-      console.error("Reports query error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load reports. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
-
   if (!session?.user?.id) {
     return (
       <div className="text-center py-4">
