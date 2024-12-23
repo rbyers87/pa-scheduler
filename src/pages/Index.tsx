@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Tables } from "@/integrations/supabase/types";
-import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 type Report = Tables<'reports'>;
 
@@ -15,8 +16,7 @@ const Index = () => {
     console.log("Index: Component mounted with session:", {
       userId: session?.user?.id,
       hasAccessToken: !!accessToken,
-      role: session?.user?.user_metadata?.role,
-      sessionObject: session
+      role: session?.user?.user_metadata?.role
     });
   }, [session, accessToken]);
 
@@ -34,11 +34,18 @@ const Index = () => {
         role: session.user.user_metadata?.role
       });
 
-      const { data, error: queryError } = await supabase
+      // Query only reports for the current user unless they're an admin
+      const query = supabase
         .from('reports')
         .select('*')
-        .order('created_at', { ascending: false })
-        .throwOnError();
+        .order('created_at', { ascending: false });
+
+      // If user is not an admin, filter by their user_id
+      if (session.user.user_metadata?.role !== 'admin') {
+        query.eq('user_id', session.user.id);
+      }
+
+      const { data, error: queryError } = await query.throwOnError();
 
       if (queryError) {
         console.error("Index: Error fetching reports:", queryError);
@@ -78,7 +85,9 @@ const Index = () => {
       <h1 className="text-2xl font-bold mb-4">Welcome to Aladtec 2.0</h1>
       <div className="grid gap-4">
         {isLoading ? (
-          <div>Loading...</div>
+          <div className="flex items-center justify-center p-4">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
         ) : error ? (
           <div className="text-red-500">
             Error loading reports. Please try again.
