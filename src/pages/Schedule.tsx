@@ -10,13 +10,13 @@
  * - Schedule export functionality
  */
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ScheduleCalendar } from "@/components/ScheduleCalendar";
 import { WeeklySchedule } from "@/components/schedule/WeeklySchedule";
-import { DailySchedule } from "@/components/schedule/DailySchedule";
+import { DailyBlocksView } from "@/components/schedule/DailyBlocksView";
 import { RecurringScheduleForm } from "@/components/schedule/RecurringScheduleForm";
 import {
   Select,
@@ -55,7 +55,7 @@ const Schedule = () => {
   const renderScheduleView = () => {
     switch (viewType) {
       case "daily":
-        return <DailySchedule date={selectedDate} />;
+        return <DailyBlocksView date={selectedDate} />;
       case "weekly":
         return <WeeklySchedule />;
       case "monthly":
@@ -93,4 +93,3 @@ const Schedule = () => {
 };
 
 export default Schedule;
-

@@ -26,6 +26,9 @@ type EmployeeFormData = {
   first_name: string;
   last_name: string;
   role: "admin" | "supervisor" | "employee";
+  rank: string;
+  hire_date: string;
+  division: string;
 };
 
 export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
@@ -69,7 +72,10 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
               email: data.email,
               first_name: data.first_name,
               last_name: data.last_name,
-              role: data.role
+              role: data.role,
+              rank: data.rank,
+              hire_date: data.hire_date,
+              division: data.division
             }
           }
         });
@@ -185,6 +191,45 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
                   <SelectItem value="employee">Employee</SelectItem>
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="rank"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Rank</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="hire_date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Hire Date</FormLabel>
+              <FormControl>
+                <Input {...field} type="date" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="division"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Division</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

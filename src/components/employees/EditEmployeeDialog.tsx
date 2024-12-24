@@ -28,6 +28,9 @@ type Employee = {
   first_name: string | null;
   last_name: string | null;
   role: "admin" | "supervisor" | "employee";
+  rank: string | null;
+  hire_date: string | null;
+  division: string | null;
 };
 
 export function EditEmployeeDialog({ employee }: { employee: Employee }) {
@@ -35,6 +38,9 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
   const [firstName, setFirstName] = useState(employee.first_name || "");
   const [lastName, setLastName] = useState(employee.last_name || "");
   const [role, setRole] = useState(employee.role);
+  const [rank, setRank] = useState(employee.rank || "");
+  const [hireDate, setHireDate] = useState(employee.hire_date || "");
+  const [division, setDivision] = useState(employee.division || "");
   const { toast } = useToast();
   const { session, accessToken } = useAuth();
   const queryClient = useQueryClient();
@@ -45,6 +51,9 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
       first_name: string;
       last_name: string;
       role: "admin" | "supervisor" | "employee";
+      rank: string;
+      hire_date: string;
+      division: string;
     }) => {
       console.log("Updating employee:", data);
 
@@ -78,6 +87,9 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
           first_name: data.first_name,
           last_name: data.last_name,
           role: data.role,
+          rank: data.rank,
+          hire_date: data.hire_date,
+          division: data.division,
           updated_at: new Date().toISOString(),
         })
         .eq("id", data.id)
@@ -130,6 +142,9 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
       first_name: firstName,
       last_name: lastName,
       role,
+      rank,
+      hire_date: hireDate,
+      division,
     });
   };
 
@@ -178,6 +193,31 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
                 <SelectItem value="employee">Employee</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="rank">Rank</Label>
+            <Input
+              id="rank"
+              value={rank}
+              onChange={(e) => setRank(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="hireDate">Hire Date</Label>
+            <Input
+              id="hireDate"
+              type="date"
+              value={hireDate}
+              onChange={(e) => setHireDate(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="division">Division</Label>
+            <Input
+              id="division"
+              value={division}
+              onChange={(e) => setDivision(e.target.value)}
+            />
           </div>
           <Button type="submit" className="w-full">
             Update Employee
