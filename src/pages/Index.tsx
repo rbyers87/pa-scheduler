@@ -33,9 +33,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from('reports')
         .select('*')
-        .eq('user_id', session.user.id)  // Only fetch reports for the current user
-        .order('created_at', { ascending: false })
-        .throwOnError();
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error("Index: Error fetching reports:", error);
