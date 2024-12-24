@@ -37,7 +37,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState(employee.first_name || "");
   const [lastName, setLastName] = useState(employee.last_name || "");
-  const [role, setRole] = useState(employee.role);
+  const [role, setRole] = useState<"admin" | "supervisor" | "employee">(employee.role);
   const [rank, setRank] = useState(employee.rank || "");
   const [hireDate, setHireDate] = useState(employee.hire_date || "");
   const [division, setDivision] = useState(employee.division || "");
@@ -52,7 +52,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
       last_name: string;
       role: "admin" | "supervisor" | "employee";
       rank: string;
-      hire_date: string;
+      hire_date: string | null;
       division: string;
     }) => {
       console.log("Updating employee:", data);
@@ -81,17 +81,20 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw new Error("Only admins can update employee profiles");
       }
 
+      // Handle empty hire date
+      const updateData = {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        role: data.role,
+        rank: data.rank,
+        division: data.division,
+        updated_at: new Date().toISOString(),
+        hire_date: data.hire_date || null
+      };
+
       const { data: updatedProfile, error: updateError } = await supabase
         .from("profiles")
-        .update({
-          first_name: data.first_name,
-          last_name: data.last_name,
-          role: data.role,
-          rank: data.rank,
-          hire_date: data.hire_date,
-          division: data.division,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq("id", data.id)
         .select()
         .single();
@@ -143,7 +146,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
       last_name: lastName,
       role,
       rank,
-      hire_date: hireDate,
+      hire_date: hireDate || null,
       division,
     });
   };
