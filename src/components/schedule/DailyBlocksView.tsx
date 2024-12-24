@@ -97,23 +97,23 @@ export function DailyBlocksView({ date }: DailyBlocksViewProps) {
 
   const blocks = [
     {
-      title: "Battalion 1",
+      title: "Administration",
       rows: [
         { 
-          position: "Battalion Chief", 
-          name: "Teresa Hardy",
+          position: "Deputy Chief", 
+          name: "Ryan Byers",
           schedules: schedules?.filter(s => 
-            s.employee.first_name === "Teresa" && 
-            s.employee.last_name === "Hardy"
+            s.employee.first_name === "Ryan" && 
+            s.employee.last_name === "Byers"
           )
         },
       ],
     },
     {
-      title: "Engine 1",
+      title: "Day Shift",
       rows: [
         { 
-          position: "Captain", 
+          position: "Lieutenant", 
           name: "Sue Heath",
           schedules: schedules?.filter(s => 
             s.employee.first_name === "Sue" && 
@@ -121,7 +121,7 @@ export function DailyBlocksView({ date }: DailyBlocksViewProps) {
           )
         },
         { 
-          position: "Lieutenant", 
+          position: "Sergeant", 
           name: "Perry Barker",
           schedules: schedules?.filter(s => 
             s.employee.first_name === "Perry" && 
@@ -129,7 +129,7 @@ export function DailyBlocksView({ date }: DailyBlocksViewProps) {
           )
         },
         { 
-          position: "Driver", 
+          position: "FTO", 
           name: "Jonathan Langston",
           schedules: schedules?.filter(s => 
             s.employee.first_name === "Jonathan" && 
@@ -137,7 +137,7 @@ export function DailyBlocksView({ date }: DailyBlocksViewProps) {
           )
         },
         { 
-          position: "Firefighter", 
+          position: "Officer", 
           name: "Bob Dartsch",
           schedules: schedules?.filter(s => 
             s.employee.first_name === "Bob" && 
