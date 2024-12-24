@@ -34,8 +34,7 @@ const Index = () => {
         .from('reports')
         .select('*')
         .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .throwOnError();
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error("Index: Error fetching reports:", error);
