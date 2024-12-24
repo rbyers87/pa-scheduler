@@ -49,7 +49,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Workforce Scheduler</SidebarGroupLabel>
+          <SidebarGroupLabel>AppSidebar file Scheduler</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
