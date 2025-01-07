@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -13,6 +13,8 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface TimeOffHistoryProps {
   employeeId?: string;
@@ -20,6 +22,8 @@ interface TimeOffHistoryProps {
 
 export function TimeOffHistory({ employeeId }: TimeOffHistoryProps) {
   const { session } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const effectiveEmployeeId = employeeId || session?.user?.id;
 
   const { data: userProfile } = useQuery({
@@ -64,16 +68,17 @@ export function TimeOffHistory({ employeeId }: TimeOffHistoryProps) {
       }
 
       const isAdmin = userProfile?.role === "admin";
-      console.log("TimeOffHistory: User is admin:", isAdmin);
+      const isSupervisor = userProfile?.role === "supervisor";
+      console.log("TimeOffHistory: User roles:", { isAdmin, isSupervisor });
 
-      if (!isAdmin && effectiveEmployeeId !== session.user.id) {
+      if (!isAdmin && !isSupervisor && effectiveEmployeeId !== session.user.id) {
         console.error("TimeOffHistory: Unauthorized access attempt");
         throw new Error("Unauthorized");
       }
 
       const { data, error } = await supabase
         .from("time_off_requests")
-        .select("*")
+        .select("*, employee:profiles(first_name, last_name)")
         .eq("employee_id", effectiveEmployeeId)
         .order("start_date", { ascending: false });
 
@@ -87,6 +92,35 @@ export function TimeOffHistory({ employeeId }: TimeOffHistoryProps) {
     },
     enabled: !!session?.user?.id && !!userProfile,
   });
+
+  const updateRequestMutation = useMutation({
+    mutationFn: async ({ requestId, status }: { requestId: string; status: string }) => {
+      console.log("TimeOffHistory: Updating request status", { requestId, status });
+      const { error } = await supabase
+        .from("time_off_requests")
+        .update({ status })
+        .eq("id", requestId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["time-off-requests"] });
+      toast({
+        title: "Request updated",
+        description: "The time off request has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      console.error("TimeOffHistory: Error updating request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update the request. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const canManageRequests = userProfile?.role === "admin" || userProfile?.role === "supervisor";
 
   if (error) {
     return (
@@ -114,21 +148,30 @@ export function TimeOffHistory({ employeeId }: TimeOffHistoryProps) {
     );
   }
 
+  const handleUpdateStatus = (requestId: string, status: string) => {
+    updateRequestMutation.mutate({ requestId, status });
+  };
+
   return (
     <div className="relative overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Employee</TableHead>
             <TableHead>Start Date</TableHead>
             <TableHead>End Date</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Notes</TableHead>
+            {canManageRequests && <TableHead>Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {requests.map((request) => (
             <TableRow key={request.id}>
+              <TableCell>
+                {request.employee?.first_name} {request.employee?.last_name}
+              </TableCell>
               <TableCell>
                 {format(new Date(request.start_date), "MMM d, yyyy")}
               </TableCell>
@@ -150,6 +193,27 @@ export function TimeOffHistory({ employeeId }: TimeOffHistoryProps) {
                 </Badge>
               </TableCell>
               <TableCell>{request.notes}</TableCell>
+              {canManageRequests && request.status === "pending" && (
+                <TableCell className="space-x-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => handleUpdateStatus(request.id, "approved")}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleUpdateStatus(request.id, "rejected")}
+                  >
+                    Deny
+                  </Button>
+                </TableCell>
+              )}
+              {canManageRequests && request.status !== "pending" && (
+                <TableCell>-</TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>
