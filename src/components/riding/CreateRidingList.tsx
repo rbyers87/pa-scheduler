@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
 
 interface CreateRidingListProps {
   date: Date;
@@ -21,12 +22,13 @@ interface CreateRidingListProps {
 
 export function CreateRidingList({ date, onSuccess, onCancel }: CreateRidingListProps) {
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
 
-  const { data: schedules } = useQuery({
+  const { data: schedules, isLoading, error } = useQuery({
     queryKey: ["schedules", date],
     queryFn: async () => {
-      console.log("Fetching schedules for date:", format(date, "yyyy-MM-dd"));
+      console.log("CreateRidingList: Fetching schedules for date:", format(date, "yyyy-MM-dd"));
       const { data, error } = await supabase
         .from("schedules")
         .select(`
@@ -34,16 +36,19 @@ export function CreateRidingList({ date, onSuccess, onCancel }: CreateRidingList
           employee:profiles(
             id,
             first_name,
-            last_name
+            last_name,
+            rank,
+            division
           )
         `)
         .eq("start_time::date", format(date, "yyyy-MM-dd"));
 
       if (error) {
-        console.error("Error fetching schedules:", error);
+        console.error("CreateRidingList: Error fetching schedules:", error);
         throw error;
       }
 
+      console.log("CreateRidingList: Retrieved schedules:", data);
       return data;
     },
   });
@@ -58,6 +63,9 @@ export function CreateRidingList({ date, onSuccess, onCancel }: CreateRidingList
 
   const handleCreate = async () => {
     try {
+      setIsCreating(true);
+      console.log("CreateRidingList: Starting list creation for date:", format(date, "yyyy-MM-dd"));
+      
       const formattedDate = format(date, "yyyy-MM-dd");
       const ridingListData = selectedEmployees.map((employeeId, index) => ({
         date: formattedDate,
@@ -66,29 +74,50 @@ export function CreateRidingList({ date, onSuccess, onCancel }: CreateRidingList
         status: "active" as const,
       }));
 
-      const { error } = await supabase
+      console.log("CreateRidingList: Inserting riding list data:", ridingListData);
+
+      const { error: insertError } = await supabase
         .from("riding_lists")
         .insert(ridingListData);
 
-      if (error) {
-        console.error("Error creating riding list:", error);
-        throw error;
+      if (insertError) {
+        console.error("CreateRidingList: Error creating riding list:", insertError);
+        throw insertError;
       }
 
+      console.log("CreateRidingList: Successfully created riding list");
       onSuccess();
       toast({
         title: "Success",
         description: "Riding list has been created.",
       });
     } catch (error) {
-      console.error("Error creating riding list:", error);
+      console.error("CreateRidingList: Error in handleCreate:", error);
       toast({
         title: "Error",
-        description: "Failed to create riding list",
+        description: "Failed to create riding list. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsCreating(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500 p-4">
+        Error loading schedules. Please try again.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -97,6 +126,8 @@ export function CreateRidingList({ date, onSuccess, onCancel }: CreateRidingList
           <TableRow>
             <TableHead>Select</TableHead>
             <TableHead>Employee</TableHead>
+            <TableHead>Rank</TableHead>
+            <TableHead>Division</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -113,20 +144,29 @@ export function CreateRidingList({ date, onSuccess, onCancel }: CreateRidingList
               <TableCell>
                 {schedule.employee.first_name} {schedule.employee.last_name}
               </TableCell>
+              <TableCell>{schedule.employee.rank}</TableCell>
+              <TableCell>{schedule.employee.division}</TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
 
       <div className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={onCancel}>
+        <Button variant="outline" onClick={onCancel} disabled={isCreating}>
           Cancel
         </Button>
         <Button
           onClick={handleCreate}
-          disabled={selectedEmployees.length === 0}
+          disabled={selectedEmployees.length === 0 || isCreating}
         >
-          Create List
+          {isCreating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            'Create List'
+          )}
         </Button>
       </div>
     </div>
