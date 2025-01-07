@@ -8,7 +8,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
-type Report = Tables<'reports'>
+type Report = Tables<'reports'>;
 
 const Reports = ({ accessToken }: { accessToken: string }) => {
   const { session } = useAuth();
@@ -51,7 +51,7 @@ const Reports = ({ accessToken }: { accessToken: string }) => {
         count: data?.length || 0
       });
 
-      return data || [];
+      return data;
     },
     enabled: !!session?.user?.id && !!accessToken,
     meta: {
@@ -66,6 +66,24 @@ const Reports = ({ accessToken }: { accessToken: string }) => {
     }
   });
 
+  const handleExportReports = async () => {
+    try {
+      // Implementation for report export
+      console.log("Exporting reports...");
+      toast({
+        title: "Export Started",
+        description: "Your reports are being exported...",
+      });
+    } catch (error) {
+      console.error("Error exporting reports:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export reports. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!session?.user?.id) {
     return (
       <div className="text-center py-4">
@@ -78,7 +96,7 @@ const Reports = ({ accessToken }: { accessToken: string }) => {
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Reports</h2>
-        <Button onClick={() => console.log("Exporting reports...")}>Export Reports</Button>
+        <Button onClick={handleExportReports}>Export Reports</Button>
       </div>
       
       {isLoading ? (

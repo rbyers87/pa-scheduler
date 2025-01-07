@@ -34,7 +34,8 @@ const Index = () => {
         .from('reports')
         .select('*')
         .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .throwOnError();
 
       if (error) {
         console.error("Index: Error fetching reports:", error);
@@ -45,7 +46,7 @@ const Index = () => {
         count: data?.length || 0
       });
 
-      return data || [];
+      return data;
     },
     enabled: !!session?.user?.id,
     meta: {
