@@ -9,17 +9,16 @@ import { format } from "date-fns";
 
 type Report = Tables<'reports'>;
 
-const Index = ({ accessToken }: { accessToken: string }) => {
+const Index = () => {
   const { session } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     console.log("Index: Component mounted with session:", {
       userId: session?.user?.id,
-      hasAccessToken: !!accessToken,
       role: session?.user?.user_metadata?.role
     });
-  }, [session, accessToken]);
+  }, [session]);
 
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
@@ -46,9 +45,9 @@ const Index = ({ accessToken }: { accessToken: string }) => {
         count: data?.length || 0
       });
 
-      return data;
+      return data || [];
     },
-    enabled: !!session?.user?.id && !!accessToken,
+    enabled: !!session?.user?.id,
     meta: {
       onError: (error: any) => {
         console.error("Index: Query error:", error);
