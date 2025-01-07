@@ -5,20 +5,21 @@ import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { format } from "date-fns";
 
 type Report = Tables<'reports'>;
 
-const Index = () => {
+const Index = ({ accessToken }: { accessToken: string }) => {
   const { session } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     console.log("Index: Component mounted with session:", {
       userId: session?.user?.id,
-      hasAccessToken: !!session?.access_token,
+      hasAccessToken: !!accessToken,
       role: session?.user?.user_metadata?.role
     });
-  }, [session]);
+  }, [session, accessToken]);
 
   const { data: reports = [], isLoading, error } = useQuery({
     queryKey: ['reports', session?.user?.id],
@@ -35,7 +36,7 @@ const Index = () => {
         .select('*')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
-        .throwOnError();
+        .limit(5);
 
       if (error) {
         console.error("Index: Error fetching reports:", error);
@@ -48,13 +49,13 @@ const Index = () => {
 
       return data;
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id && !!accessToken,
     meta: {
       onError: (error: any) => {
         console.error("Index: Query error:", error);
         toast({
           title: "Error",
-          description: "Failed to load reports. Please try again.",
+          description: "Failed to load recent reports. Please try again.",
           variant: "destructive",
         });
       }
@@ -73,28 +74,33 @@ const Index = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-4">Welcome to Aladtec 2.0</h1>
       <div className="grid gap-4">
-        {isLoading ? (
-          <div className="flex items-center justify-center p-4">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
-        ) : error ? (
-          <div className="text-red-500 p-4 rounded-md bg-red-50">
-            Error loading reports. Please try again.
-          </div>
-        ) : reports.length > 0 ? (
-          reports.map((report: Report) => (
-            <div key={report.id} className="p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white">
-              <h3 className="font-semibold">{report.name}</h3>
-              <p className="text-sm text-gray-500">
-                Created: {new Date(report.created_at).toLocaleDateString()}
-              </p>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Recent Reports</h2>
+          {isLoading ? (
+            <div className="flex items-center justify-center p-4">
+              <Loader2 className="h-6 w-6 animate-spin" />
             </div>
-          ))
-        ) : (
-          <div className="text-center text-gray-500 p-4">
-            No reports available.
-          </div>
-        )}
+          ) : error ? (
+            <div className="text-red-500 p-4 rounded-md bg-red-50">
+              Error loading reports. Please try again.
+            </div>
+          ) : reports.length > 0 ? (
+            <div className="space-y-4">
+              {reports.map((report: Report) => (
+                <div key={report.id} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+                  <h3 className="font-semibold">{report.name}</h3>
+                  <p className="text-sm text-gray-500">
+                    Created: {format(new Date(report.created_at), 'MMM dd, yyyy')}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 p-4">
+              No reports available.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

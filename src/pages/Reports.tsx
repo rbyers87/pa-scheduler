@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -6,13 +6,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
+import { format } from "date-fns";
 
 type Report = Tables<'reports'>;
 
 const Reports = ({ accessToken }: { accessToken: string }) => {
   const { session } = useAuth();
   const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     console.log("Reports: Component mounted with session:", {
@@ -22,7 +24,7 @@ const Reports = ({ accessToken }: { accessToken: string }) => {
     });
   }, [session, accessToken]);
 
-  const { data: reports = [], isLoading, error } = useQuery({
+  const { data: reports = [], isLoading, error, refetch } = useQuery({
     queryKey: ['reports', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) {
@@ -30,17 +32,12 @@ const Reports = ({ accessToken }: { accessToken: string }) => {
         throw new Error('Authentication required');
       }
 
-      console.log("Reports: Fetching reports with session:", {
-        userId: session.user.id,
-        hasAccessToken: !!accessToken,
-        role: session.user.user_metadata?.role
-      });
+      console.log("Reports: Fetching reports for user:", session.user.id);
 
       const { data, error: queryError } = await supabase
         .from('reports')
         .select('*')
-        .order('created_at', { ascending: false })
-        .throwOnError();
+        .order('created_at', { ascending: false });
 
       if (queryError) {
         console.error("Reports: Error fetching reports:", queryError);
@@ -68,19 +65,42 @@ const Reports = ({ accessToken }: { accessToken: string }) => {
 
   const handleExportReports = async () => {
     try {
-      // Implementation for report export
-      console.log("Exporting reports...");
+      setIsExporting(true);
+      console.log("Reports: Starting export process");
+
+      // Here we'll format the reports data for export
+      const exportData = reports.map(report => ({
+        name: report.name,
+        created_at: format(new Date(report.created_at), 'yyyy-MM-dd HH:mm:ss'),
+        updated_at: format(new Date(report.updated_at), 'yyyy-MM-dd HH:mm:ss')
+      }));
+
+      // Create a Blob with the JSON data
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `reports-export-${format(new Date(), 'yyyy-MM-dd')}.json`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      console.log("Reports: Export completed successfully");
       toast({
-        title: "Export Started",
-        description: "Your reports are being exported...",
+        title: "Export Successful",
+        description: "Your reports have been exported.",
       });
     } catch (error) {
-      console.error("Error exporting reports:", error);
+      console.error("Reports: Error during export:", error);
       toast({
         title: "Export Failed",
         description: "Failed to export reports. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -96,7 +116,22 @@ const Reports = ({ accessToken }: { accessToken: string }) => {
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Reports</h2>
-        <Button onClick={handleExportReports}>Export Reports</Button>
+        <Button 
+          onClick={handleExportReports} 
+          disabled={isExporting || reports.length === 0}
+        >
+          {isExporting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="mr-2 h-4 w-4" />
+              Export Reports
+            </>
+          )}
+        </Button>
       </div>
       
       {isLoading ? (
@@ -112,7 +147,8 @@ const Reports = ({ accessToken }: { accessToken: string }) => {
           <TableHeader>
             <TableRow>
               <TableHead>Report Name</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead>Created Date</TableHead>
+              <TableHead>Last Updated</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -121,9 +157,21 @@ const Reports = ({ accessToken }: { accessToken: string }) => {
               reports.map((report) => (
                 <TableRow key={report.id}>
                   <TableCell>{report.name}</TableCell>
-                  <TableCell>{new Date(report.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell>{format(new Date(report.created_at), 'MMM dd, yyyy')}</TableCell>
+                  <TableCell>{format(new Date(report.updated_at), 'MMM dd, yyyy HH:mm')}</TableCell>
                   <TableCell>
-                    <Button variant="outline" onClick={() => console.log("Viewing report", report.id)}>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        console.log("Reports: Viewing report", report.id);
+                        // Implement view functionality
+                        toast({
+                          title: "View Report",
+                          description: "Report viewer coming soon.",
+                        });
+                      }}
+                    >
                       View
                     </Button>
                   </TableCell>
@@ -131,7 +179,7 @@ const Reports = ({ accessToken }: { accessToken: string }) => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-4">
+                <TableCell colSpan={4} className="text-center py-4">
                   No reports available
                 </TableCell>
               </TableRow>
