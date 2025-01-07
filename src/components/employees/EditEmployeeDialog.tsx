@@ -42,7 +42,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
   const [hireDate, setHireDate] = useState(employee.hire_date || "");
   const [division, setDivision] = useState(employee.division || "");
   const { toast } = useToast();
-  const { session, accessToken } = useAuth();
+  const { session } = useAuth();
   const queryClient = useQueryClient();
 
   const updateEmployee = useMutation({
@@ -62,15 +62,11 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw new Error("You must be logged in to update employees");
       }
 
-      if (!accessToken) {
-        throw new Error("Access token required for API requests");
-      }
-
       const { data: currentUserProfile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", session.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error("Error fetching user profile:", profileError);
@@ -81,7 +77,6 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
         throw new Error("Only admins can update employee profiles");
       }
 
-      // Handle empty hire date
       const updateData = {
         first_name: data.first_name,
         last_name: data.last_name,
@@ -102,10 +97,6 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
       if (updateError) {
         console.error("Error updating profile:", updateError);
         throw updateError;
-      }
-
-      if (!updatedProfile) {
-        throw new Error("Failed to update employee profile");
       }
 
       console.log("Successfully updated employee:", updatedProfile);
@@ -203,6 +194,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
               id="rank"
               value={rank}
               onChange={(e) => setRank(e.target.value)}
+              required
             />
           </div>
           <div className="space-y-2">
@@ -212,6 +204,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
               type="date"
               value={hireDate}
               onChange={(e) => setHireDate(e.target.value)}
+              required
             />
           </div>
           <div className="space-y-2">
@@ -220,6 +213,7 @@ export function EditEmployeeDialog({ employee }: { employee: Employee }) {
               id="division"
               value={division}
               onChange={(e) => setDivision(e.target.value)}
+              required
             />
           </div>
           <Button type="submit" className="w-full">

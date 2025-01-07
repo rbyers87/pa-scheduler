@@ -202,7 +202,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
             <FormItem>
               <FormLabel>Rank</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} required />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -215,7 +215,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
             <FormItem>
               <FormLabel>Hire Date</FormLabel>
               <FormControl>
-                <Input {...field} type="date" />
+                <Input {...field} type="date" required />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -228,7 +228,7 @@ export function EmployeeForm({ onSuccess }: { onSuccess?: () => void }) {
             <FormItem>
               <FormLabel>Division</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} required />
               </FormControl>
               <FormMessage />
             </FormItem>

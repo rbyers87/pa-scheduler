@@ -29,7 +29,7 @@ import {
 type ViewType = "daily" | "weekly" | "monthly";
 
 const Schedule = () => {
-  const { session, accessToken } = useAuth();
+  const { session } = useAuth();
   const navigate = useNavigate();
   const [viewType, setViewType] = useState<ViewType>("daily");
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -41,12 +41,6 @@ const Schedule = () => {
       navigate("/login");
     }
   }, [session, navigate]);
-
-  useEffect(() => {
-    if (accessToken) {
-      console.log("Access token available:", accessToken);
-    }
-  }, [accessToken]);
 
   if (!session) {
     return null;
