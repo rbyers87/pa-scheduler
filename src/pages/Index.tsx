@@ -21,20 +21,16 @@ const Index = () => {
   }, [session]);
 
   const { data: reports = [], isLoading, error } = useQuery({
-    queryKey: ['reports', session?.user?.id],
+    queryKey: ['reports'],
     queryFn: async () => {
-      if (!session?.user?.id) {
-        console.error("Index: No valid session");
-        throw new Error('Authentication required');
-      }
-
-      console.log("Index: Fetching reports for user:", session.user.id);
-
+      console.log("Index: Starting reports fetch");
+      
       const { data, error: queryError } = await supabase
         .from('reports')
         .select('*')
+        .order('created_at', { ascending: false })
         .limit(5)
-        .order('created_at', { ascending: false });
+        .throwOnError();
 
       if (queryError) {
         console.error("Index: Error fetching reports:", queryError);
@@ -47,7 +43,6 @@ const Index = () => {
 
       return data || [];
     },
-    enabled: !!session?.user?.id,
     meta: {
       onError: (error: any) => {
         console.error("Index: Query error:", error);
